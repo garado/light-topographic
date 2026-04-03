@@ -1,31 +1,37 @@
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import Geolocation from "@react-native-community/geolocation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PermissionsAndroid, StyleSheet, View } from "react-native";
 
 MapLibreGL.setAccessToken(null);
 
-const OPENTOPOMAP_STYLE = JSON.stringify({
-  version: 8,
-  sources: {
-    opentopomap: {
-      type: "raster",
-      tiles: ["https://tile.opentopomap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      attribution: "© OpenTopoMap (CC-BY-SA)",
-    },
+const EMPTY_STYLE = JSON.stringify({ version: 8, sources: {}, layers: [] });
+
+const DOT_SIZE = 20;
+const DOT_INNER_SIZE = 10;
+
+const styles = StyleSheet.create({
+  locationDotOuter: {
+    position: "absolute",
+    width: DOT_SIZE,
+    height: DOT_SIZE,
+    borderRadius: DOT_SIZE / 2,
+    backgroundColor: "rgba(255, 100, 0, 0.25)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  layers: [
-    {
-      id: "opentopomap",
-      type: "raster",
-      source: "opentopomap",
-    },
-  ],
+  locationDotInner: {
+    width: DOT_INNER_SIZE,
+    height: DOT_INNER_SIZE,
+    borderRadius: DOT_INNER_SIZE / 2,
+    backgroundColor: "#FF6400",
+  },
 });
 
 export default function MapScreen() {
+  const mapRef = useRef<MapLibreGL.MapView>(null);
   const [coords, setCoords] = useState<[number, number] | null>(null);
+  const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -41,14 +47,34 @@ export default function MapScreen() {
     })();
   }, []);
 
+  const updateDotPosition = useCallback(async () => {
+    if (!mapRef.current || !coords) return;
+    const point = await mapRef.current.getPointInView(coords);
+    setDotScreenPos({ x: point[0], y: point[1] });
+  }, [coords]);
+
+  useEffect(() => {
+    updateDotPosition();
+  }, [updateDotPosition]);
+
   return (
     <View style={StyleSheet.absoluteFill}>
       <MapLibreGL.MapView
-        style={StyleSheet.absoluteFill}
-        styleJSON={OPENTOPOMAP_STYLE}
+        ref={mapRef}
+        style={[StyleSheet.absoluteFill, { filter: [{ saturate: 0 }] }]}
+        styleJSON={EMPTY_STYLE}
         logoEnabled={false}
         attributionEnabled={false}
+        onRegionIsChanging={updateDotPosition}
+        onRegionDidChange={updateDotPosition}
       >
+        <MapLibreGL.RasterSource
+          id="opentopomap"
+          tileUrlTemplates={["https://tile.opentopomap.org/{z}/{x}/{y}.png"]}
+          tileSize={256}
+        >
+          <MapLibreGL.RasterLayer id="opentopomap-layer" />
+        </MapLibreGL.RasterSource>
         {coords && (
           <MapLibreGL.Camera
             zoomLevel={13}
@@ -57,6 +83,20 @@ export default function MapScreen() {
           />
         )}
       </MapLibreGL.MapView>
+      {dotScreenPos && (
+        <View
+          style={[
+            styles.locationDotOuter,
+            {
+              left: dotScreenPos.x - DOT_SIZE / 2,
+              top: dotScreenPos.y - DOT_SIZE / 2,
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <View style={styles.locationDotInner} />
+        </View>
+      )}
     </View>
   );
 }
