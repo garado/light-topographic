@@ -18,6 +18,7 @@ export default function MapScreen() {
   const cameraRef = useRef<MapLibreGL.Camera>(null);
   const [coords, setCoords] = useState<[number, number] | null>(null);
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
+  const [bearing, setBearing] = useState(0);
 
   const fetchLocation = useCallback(() => {
     Geolocation.getCurrentPosition(
@@ -37,11 +38,18 @@ export default function MapScreen() {
     })();
   }, [fetchLocation]);
 
-  const updateDotPosition = useCallback(async () => {
+  const updateDotPosition = useCallback(async (feature?: { properties?: { heading?: number } }) => {
     if (!mapRef.current || !coords) return;
     const point = await mapRef.current.getPointInView(coords);
     setDotScreenPos({ x: point[0], y: point[1] });
+    if (feature?.properties?.heading !== undefined) {
+      setBearing(feature.properties.heading);
+    }
   }, [coords]);
+
+  const resetNorth = useCallback(() => {
+    cameraRef.current?.setCamera({ heading: 0, animationDuration: 400 });
+  }, []);
 
   useEffect(() => {
     updateDotPosition();
@@ -93,9 +101,19 @@ export default function MapScreen() {
           <View style={styles.locationDotInner} />
         </View>
       )}
-      <HapticPressable style={styles.locationButton} onPress={jumpToLocation}>
-        <MaterialIcons name="my-location" size={n(48)} color="white" />
-      </HapticPressable>
+      <View style={styles.buttonRow}>
+        <HapticPressable onPress={resetNorth}>
+          <MaterialIcons
+            name="explore"
+            size={n(48)}
+            color="white"
+            style={{ transform: [{ rotate: `${-bearing}deg` }] }}
+          />
+        </HapticPressable>
+        <HapticPressable onPress={jumpToLocation}>
+          <MaterialIcons name="my-location" size={n(48)} color="white" />
+        </HapticPressable>
+      </View>
     </View>
   );
 }
@@ -116,9 +134,12 @@ const styles = StyleSheet.create({
     borderRadius: DOT_INNER_SIZE / 2,
     backgroundColor: "#FF6400",
   },
-  locationButton: {
+  buttonRow: {
     position: "absolute",
     bottom: n(20),
     right: n(20),
+    flexDirection: "row",
+    gap: n(20),
+    alignItems: "center",
   },
 });
