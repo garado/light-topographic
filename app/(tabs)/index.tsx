@@ -1,28 +1,62 @@
-import ContentContainer from "@/components/ContentContainer";
-import { StyledButton } from "@/components/StyledButton";
+import MapLibreGL from "@maplibre/maplibre-react-native";
+import Geolocation from "@react-native-community/geolocation";
+import { useEffect, useState } from "react";
+import { PermissionsAndroid, StyleSheet, View } from "react-native";
 
-const buttons = [
-  { id: "1", text: "Test Button long one because I want to test a long button 1" },
-  { id: "2", text: "Test Button 2" },
-  { id: "3", text: "Test Button 3" },
-  { id: "4", text: "Test Button 4" },
-  { id: "5", text: "Test Button 5" },
-  { id: "6", text: "Test Button 6" },
-  { id: "7", text: "Test Button 7" },
-  { id: "8", text: "Test Button 8" },
-  { id: "9", text: "Test Button 9" },
-  { id: "10", text: "Test Button 10" },
-];
+MapLibreGL.setAccessToken(null);
 
-export default function Tab() {
+const OPENTOPOMAP_STYLE = JSON.stringify({
+  version: 8,
+  sources: {
+    opentopomap: {
+      type: "raster",
+      tiles: ["https://tile.opentopomap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      attribution: "© OpenTopoMap (CC-BY-SA)",
+    },
+  },
+  layers: [
+    {
+      id: "opentopomap",
+      type: "raster",
+      source: "opentopomap",
+    },
+  ],
+});
+
+export default function MapScreen() {
+  const [coords, setCoords] = useState<[number, number] | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      );
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
+      Geolocation.getCurrentPosition(
+        (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
+        (err) => console.error("Location error:", err),
+        { enableHighAccuracy: true, timeout: 15000 },
+      );
+    })();
+  }, []);
+
   return (
-    <ContentContainer
-      headerTitle="Liked Songs"
-      hideBackButton
-    >
-      {buttons.map((button) => (
-        <StyledButton key={button.id} text={button.text} />
-      ))}
-    </ContentContainer>
+    <View style={StyleSheet.absoluteFill}>
+      <MapLibreGL.MapView
+        style={StyleSheet.absoluteFill}
+        styleJSON={OPENTOPOMAP_STYLE}
+        logoEnabled={false}
+        attributionEnabled={false}
+      >
+        {coords && (
+          <MapLibreGL.Camera
+            zoomLevel={13}
+            centerCoordinate={coords}
+            animationMode="none"
+          />
+        )}
+      </MapLibreGL.MapView>
+    </View>
   );
 }

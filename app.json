@@ -8,7 +8,11 @@
     "icon": "./assets/images/icon.png",
     "android": {
       "backgroundColor": "#000000",
-      "package": "com.garado.topographic"
+      "package": "com.garado.topographic",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -32,6 +36,9 @@
         "projectId": "cfbf2b2e-0119-474a-ae1e-19eae9b7614a"
       }
     },
-    "owner": "agarado"
+    "owner": "agarado",
+    "ios": {
+      "bundleIdentifier": "com.garado.topographic"
+    }
   }
 }
