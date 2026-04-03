@@ -4,7 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
+import { useMapStyle } from "@/contexts/MapStyleContext";
 import { n } from "@/utils/scaling";
+
+const MAP_FILTERS: Record<string, object[]> = {
+  color: [],
+  white: [{ grayscale: 1 }],
+  black: [{ grayscale: 1 }, { invert: 1 }],
+};
 
 MapLibreGL.setAccessToken(null);
 
@@ -14,6 +21,7 @@ const DOT_SIZE = 20;
 const DOT_INNER_SIZE = 10;
 
 export default function MapScreen() {
+  const { mapStyle } = useMapStyle();
   const mapRef = useRef<MapLibreGL.MapView>(null);
   const cameraRef = useRef<MapLibreGL.Camera>(null);
   const [coords, setCoords] = useState<[number, number] | null>(null);
@@ -64,7 +72,7 @@ export default function MapScreen() {
     <View style={StyleSheet.absoluteFill}>
       <MapLibreGL.MapView
         ref={mapRef}
-        style={[StyleSheet.absoluteFill, { filter: [{ saturate: 0 }] }]}
+        style={[StyleSheet.absoluteFill, { filter: MAP_FILTERS[mapStyle] }]}
         styleJSON={EMPTY_STYLE}
         logoEnabled={false}
         attributionEnabled={false}
