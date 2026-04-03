@@ -1,11 +1,14 @@
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import Geolocation from "@react-native-community/geolocation";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
 import { useMapStyle } from "@/contexts/MapStyleContext";
 import { n } from "@/utils/scaling";
+import { parseGpx, type GpxRoute } from "@/utils/parseGpx";
 
 const MAP_FILTERS: Record<string, object[]> = {
   color: [],
@@ -27,6 +30,7 @@ export default function MapScreen() {
   const [coords, setCoords] = useState<[number, number] | null>(null);
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [bearing, setBearing] = useState(0);
+  const [route, setRoute] = useState<GpxRoute | null>(null);
 
   const fetchLocation = useCallback(() => {
     Geolocation.getCurrentPosition(
@@ -68,6 +72,26 @@ export default function MapScreen() {
     cameraRef.current.flyTo(coords, 400);
   }, [coords]);
 
+  const loadGpx = useCallback(async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["application/gpx+xml", "text/xml", "application/xml", "*/*"],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    const content = await FileSystem.readAsStringAsync(result.assets[0].uri);
+    const parsed = parseGpx(content);
+    if (!parsed) return;
+
+    setRoute(parsed);
+    cameraRef.current?.fitBounds(
+      [parsed.bounds[2], parsed.bounds[3]],
+      [parsed.bounds[0], parsed.bounds[1]],
+      50,
+      600,
+    );
+  }, []);
+
   return (
     <View style={StyleSheet.absoluteFill}>
       <MapLibreGL.MapView
@@ -94,6 +118,18 @@ export default function MapScreen() {
             animationMode="none"
           />
         )}
+        {route && (
+          <MapLibreGL.ShapeSource id="route" shape={route.geojson}>
+            <MapLibreGL.LineLayer
+              id="route-line"
+              layerStyle={{
+                lineColor: "#FF6400",
+                lineWidth: 3,
+                lineOpacity: 0.9,
+              }}
+            />
+          </MapLibreGL.ShapeSource>
+        )}
       </MapLibreGL.MapView>
       {dotScreenPos && (
         <View
@@ -110,6 +146,9 @@ export default function MapScreen() {
         </View>
       )}
       <View style={styles.buttonRow}>
+        <HapticPressable onPress={loadGpx}>
+          <MaterialIcons name="route" size={n(48)} color="white" />
+        </HapticPressable>
         <HapticPressable onPress={resetNorth}>
           <MaterialIcons
             name="explore"
