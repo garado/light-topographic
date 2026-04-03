@@ -2,6 +2,9 @@ import MapLibreGL from "@maplibre/maplibre-react-native";
 import Geolocation from "@react-native-community/geolocation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PermissionsAndroid, StyleSheet, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { HapticPressable } from "@/components/HapticPressable";
+import { n } from "@/utils/scaling";
 
 MapLibreGL.setAccessToken(null);
 
@@ -10,28 +13,19 @@ const EMPTY_STYLE = JSON.stringify({ version: 8, sources: {}, layers: [] });
 const DOT_SIZE = 20;
 const DOT_INNER_SIZE = 10;
 
-const styles = StyleSheet.create({
-  locationDotOuter: {
-    position: "absolute",
-    width: DOT_SIZE,
-    height: DOT_SIZE,
-    borderRadius: DOT_SIZE / 2,
-    backgroundColor: "rgba(255, 100, 0, 0.25)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  locationDotInner: {
-    width: DOT_INNER_SIZE,
-    height: DOT_INNER_SIZE,
-    borderRadius: DOT_INNER_SIZE / 2,
-    backgroundColor: "#FF6400",
-  },
-});
-
 export default function MapScreen() {
   const mapRef = useRef<MapLibreGL.MapView>(null);
+  const cameraRef = useRef<MapLibreGL.Camera>(null);
   const [coords, setCoords] = useState<[number, number] | null>(null);
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
+
+  const fetchLocation = useCallback(() => {
+    Geolocation.getCurrentPosition(
+      (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
+      (err) => console.error("Location error:", err),
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -39,13 +33,9 @@ export default function MapScreen() {
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
       if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
-      Geolocation.getCurrentPosition(
-        (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
-        (err) => console.error("Location error:", err),
-        { enableHighAccuracy: true, timeout: 15000 },
-      );
+      fetchLocation();
     })();
-  }, []);
+  }, [fetchLocation]);
 
   const updateDotPosition = useCallback(async () => {
     if (!mapRef.current || !coords) return;
@@ -56,6 +46,11 @@ export default function MapScreen() {
   useEffect(() => {
     updateDotPosition();
   }, [updateDotPosition]);
+
+  const jumpToLocation = useCallback(() => {
+    if (!cameraRef.current || !coords) return;
+    cameraRef.current.flyTo(coords, 400);
+  }, [coords]);
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -77,6 +72,7 @@ export default function MapScreen() {
         </MapLibreGL.RasterSource>
         {coords && (
           <MapLibreGL.Camera
+            ref={cameraRef}
             zoomLevel={13}
             centerCoordinate={coords}
             animationMode="none"
@@ -97,6 +93,32 @@ export default function MapScreen() {
           <View style={styles.locationDotInner} />
         </View>
       )}
+      <HapticPressable style={styles.locationButton} onPress={jumpToLocation}>
+        <MaterialIcons name="my-location" size={n(48)} color="white" />
+      </HapticPressable>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  locationDotOuter: {
+    position: "absolute",
+    width: DOT_SIZE,
+    height: DOT_SIZE,
+    borderRadius: DOT_SIZE / 2,
+    backgroundColor: "rgba(255, 100, 0, 0.25)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  locationDotInner: {
+    width: DOT_INNER_SIZE,
+    height: DOT_INNER_SIZE,
+    borderRadius: DOT_INNER_SIZE / 2,
+    backgroundColor: "#FF6400",
+  },
+  locationButton: {
+    position: "absolute",
+    bottom: n(20),
+    right: n(20),
+  },
+});
