@@ -1,113 +1,185 @@
-export function buildMapStyle(apiKey: string, maptilerKey: string) {
+export function buildMapStyle() {
   return JSON.stringify({
     version: 8,
+    glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
     sources: {
-      protomaps: {
+      osm: {
         type: "vector",
-        tiles: [`https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.pbf?key=${apiKey}`],
+        tiles: ["https://tiles.openstreetmap.us/vector/openmaptiles/{z}/{x}/{y}.mvt"],
         minzoom: 0,
-        maxzoom: 15,
-        attribution: "Protomaps © OpenStreetMap",
+        maxzoom: 14,
+        attribution: "© OpenStreetMap contributors",
+      },
+      trails: {
+        type: "vector",
+        tiles: ["https://tiles.openstreetmap.us/vector/trails/{z}/{x}/{y}.mvt"],
+        minzoom: 5,
+        maxzoom: 14,
       },
       contours: {
         type: "vector",
-        tiles: [`https://api.maptiler.com/tiles/contours/{z}/{x}/{y}.pbf?key=${maptilerKey}`],
-        minzoom: 9,
-        maxzoom: 14,
+        tiles: ["https://tiles.openstreetmap.us/vector/contours-feet/{z}/{x}/{y}.mvt"],
+        minzoom: 8,
+        maxzoom: 12,
       },
     },
     layers: [
+      // Background
+      { id: "background", type: "background", paint: { "background-color": "#0d0d0d" } },
+
       // Land
       {
-        id: "background",
-        type: "background",
-        paint: { "background-color": "#0d0d0d" },
+        id: "landcover",
+        type: "fill",
+        source: "osm",
+        "source-layer": "landcover",
+        paint: { "fill-color": "#141414" },
       },
       {
-        id: "earth",
+        id: "landuse",
         type: "fill",
-        source: "protomaps",
-        "source-layer": "earth",
-        paint: { "fill-color": "#111111" },
+        source: "osm",
+        "source-layer": "landuse",
+        paint: { "fill-color": "#161616" },
       },
-      // Natural areas (forests, parks)
       {
-        id: "natural",
+        id: "park",
         type: "fill",
-        source: "protomaps",
-        "source-layer": "natural",
-        paint: { "fill-color": "#181818" },
+        source: "osm",
+        "source-layer": "park",
+        paint: { "fill-color": "#1a1a1a" },
       },
+
       // Water
       {
         id: "water",
         type: "fill",
-        source: "protomaps",
+        source: "osm",
         "source-layer": "water",
-        paint: { "fill-color": "#2a2a2a" },
+        paint: { "fill-color": "#252525" },
       },
       {
         id: "waterway",
         type: "line",
-        source: "protomaps",
+        source: "osm",
         "source-layer": "waterway",
-        paint: { "line-color": "#3a3a3a", "line-width": 1 },
+        paint: { "line-color": "#303030", "line-width": 1 },
       },
-      // Contour lines
+
+      // Contours — regular
       {
         id: "contour",
         type: "line",
         source: "contours",
         "source-layer": "contour",
-        paint: { "line-color": "#888888", "line-width": 1, "line-opacity": 0.9 },
+        filter: ["==", "idx", false],
+        paint: { "line-color": "#2e2e2e", "line-width": 0.5, "line-opacity": 0.9 },
       },
-      // Roads — minor
+      // Contours — index (every 5th)
       {
-        id: "roads-other",
+        id: "contour-index",
         type: "line",
-        source: "protomaps",
-        "source-layer": "roads",
-        filter: ["in", "pmap:kind", "other", "minor_road"],
-        paint: { "line-color": "#2a2a2a", "line-width": 1 },
+        source: "contours",
+        "source-layer": "contour",
+        filter: ["==", "idx", true],
+        paint: { "line-color": "#505050", "line-width": 1, "line-opacity": 1 },
       },
-      // Roads — medium
+
+      // Roads
+      {
+        id: "roads-minor",
+        type: "line",
+        source: "osm",
+        "source-layer": "transportation",
+        filter: ["in", "class", "minor", "service", "track"],
+        paint: { "line-color": "#282828", "line-width": 1 },
+      },
       {
         id: "roads-medium",
         type: "line",
-        source: "protomaps",
-        "source-layer": "roads",
-        filter: ["==", "pmap:kind", "medium_road"],
-        paint: { "line-color": "#3a3a3a", "line-width": 1.5 },
+        source: "osm",
+        "source-layer": "transportation",
+        filter: ["in", "class", "tertiary", "secondary"],
+        paint: { "line-color": "#333333", "line-width": 1.5 },
       },
-      // Roads — major
       {
         id: "roads-major",
         type: "line",
-        source: "protomaps",
-        "source-layer": "roads",
-        filter: ["==", "pmap:kind", "major_road"],
-        paint: { "line-color": "#4a4a4a", "line-width": 2 },
+        source: "osm",
+        "source-layer": "transportation",
+        filter: ["in", "class", "primary", "trunk", "motorway"],
+        paint: { "line-color": "#444444", "line-width": 2.5 },
       },
-      // Highways
+
+      // Trails — from dedicated trail source
       {
-        id: "roads-highway",
+        id: "trails",
         type: "line",
-        source: "protomaps",
-        "source-layer": "roads",
-        filter: ["==", "pmap:kind", "highway"],
-        paint: { "line-color": "#606060", "line-width": 3 },
-      },
-      // Trails & paths — key for hiking
-      {
-        id: "paths",
-        type: "line",
-        source: "protomaps",
-        "source-layer": "roads",
-        filter: ["==", "pmap:kind", "path"],
+        source: "trails",
+        "source-layer": "trail",
         paint: {
           "line-color": "#888888",
           "line-width": 1,
           "line-dasharray": [3, 2],
+        },
+      },
+
+      // Trail names
+      {
+        id: "trail-names",
+        type: "symbol",
+        source: "trails",
+        "source-layer": "trail",
+        layout: {
+          "text-field": ["get", "name"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 10,
+          "symbol-placement": "line",
+          "text-max-angle": 30,
+        },
+        paint: {
+          "text-color": "#aaaaaa",
+          "text-halo-color": "#000000",
+          "text-halo-width": 1.5,
+        },
+      },
+
+      // Place labels
+      {
+        id: "place-labels",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "place",
+        layout: {
+          "text-field": ["get", "name"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": ["interpolate", ["linear"], ["zoom"], 6, 10, 14, 14],
+          "text-max-width": 8,
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#000000",
+          "text-halo-width": 1.5,
+        },
+      },
+
+      // Mountain peak labels
+      {
+        id: "peak-labels",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "mountain_peak",
+        layout: {
+          "text-field": ["concat", ["get", "name"], "\n", ["get", "ele"], "m"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 11,
+          "text-anchor": "top",
+          "text-offset": [0, 0.5],
+        },
+        paint: {
+          "text-color": "#cccccc",
+          "text-halo-color": "#000000",
+          "text-halo-width": 1.5,
         },
       },
     ],
