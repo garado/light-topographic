@@ -144,14 +144,12 @@ export default function MapScreen() {
         onRegionIsChanging={updateDotPosition}
         onRegionDidChange={updateDotPosition}
       >
-        {initialCoords && (
-          <MapLibreGL.Camera
-            ref={cameraRef}
-            zoomLevel={13}
-            centerCoordinate={initialCoords}
-            animationMode="none"
-          />
-        )}
+        <MapLibreGL.Camera
+          ref={cameraRef}
+          zoomLevel={13}
+          centerCoordinate={initialCoords ?? [0, 0]}
+          animationMode="none"
+        />
         {activeRoute && layers.route.visible && (
           <MapLibreGL.ShapeSource id="route" shape={activeRoute.geojson}>
             <MapLibreGL.LineLayer
@@ -247,5 +245,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: n(20),
     alignItems: "center",
+    elevation: 10,
   },
 });
