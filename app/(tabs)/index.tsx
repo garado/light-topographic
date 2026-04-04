@@ -109,7 +109,7 @@ export default function MapScreen() {
           <MapLibreGL.ShapeSource id="route" shape={route.geojson}>
             <MapLibreGL.LineLayer
               id="route-line"
-              layerStyle={{ lineColor: "#ffffff", lineWidth: 3, lineOpacity: 0.9 }}
+              style={{ lineColor: "#FFD700", lineWidth: 3, lineOpacity: 0.9 }}
             />
           </MapLibreGL.ShapeSource>
         )}
