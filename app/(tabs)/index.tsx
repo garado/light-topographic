@@ -150,6 +150,19 @@ export default function MapScreen() {
       if (userHeadingRef.current !== null) coneRotationAnim.setValue(userHeadingRef.current);
     } else if (mode === CompassMode.Heading) {
       setLocateMode(LocateMode.Following);
+      if (userHeadingRef.current !== null && cameraRef.current) {
+        const heading = userHeadingRef.current;
+        suppressResetRef.current = true;
+        cameraRef.current.setCamera({
+          centerCoordinate: coordsRef.current ?? undefined,
+          heading,
+          animationDuration: 150,
+          animationMode: "easeTo",
+        });
+        setTimeout(() => { suppressResetRef.current = false; }, 250);
+        bearingRef.current = heading;
+        coneRotationAnim.setValue(0);
+      }
     }
   }, [moveCamera, coneRotationAnim, setLocateMode]);
 
