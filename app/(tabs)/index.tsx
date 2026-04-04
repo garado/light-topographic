@@ -12,7 +12,8 @@ import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useRoutes } from "@/contexts/RoutesContext";
 MapLibreGL.setAccessToken("pk.placeholder");
 
-enum LocateMode { Free, Centered, Zoomed, Locked }
+enum LocateMode { Free, Centered, Following }
+enum CompassMode { Free, North, Heading }
 MapLibreGL.offlineManager.setTileCountLimit(5000);
 
 const DOT_SIZE = 12;
@@ -32,6 +33,7 @@ export default function MapScreen() {
   // Heading tracked as refs to avoid re-renders; Animated.Value drives the cone
   const userHeadingRef = useRef<number | null>(null);
   const bearingRef = useRef(0);
+  const coordsRef = useRef<[number, number] | null>(null);
   const coneRotationAnim = useRef(new Animated.Value(0)).current;
   const [hasHeading, setHasHeading] = useState(false);
 
@@ -51,6 +53,7 @@ export default function MapScreen() {
         (pos) => {
           const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
           setCoords(c);
+          coordsRef.current = c;
           setInitialCoords((prev) => prev ?? c);
         },
         (err) => console.error("Location error:", err),
@@ -62,6 +65,19 @@ export default function MapScreen() {
       userHeadingRef.current = heading;
       coneRotationAnim.setValue(heading - bearingRef.current);
       if (!hasHeading) setHasHeading(true);
+
+      if (compassModeRef.current === CompassMode.Heading && cameraRef.current) {
+        suppressResetRef.current = true;
+        cameraRef.current.setCamera({
+          centerCoordinate: coordsRef.current ?? undefined,
+          heading,
+          animationDuration: 150,
+          animationMode: "easeTo",
+        });
+        setTimeout(() => { suppressResetRef.current = false; }, 250);
+        bearingRef.current = heading;
+        coneRotationAnim.setValue(0);
+      }
     });
 
     return () => {
@@ -110,23 +126,7 @@ export default function MapScreen() {
     );
   }, [activeRoute]);
 
-  const resetNorth = useCallback(() => {
-    cameraRef.current?.setCamera({ heading: 0, animationDuration: 400 });
-    bearingRef.current = 0;
-    setBearing(0);
-    if (userHeadingRef.current !== null) {
-      coneRotationAnim.setValue(userHeadingRef.current);
-    }
-  }, [coneRotationAnim]);
-
-  const locateModeRef = useRef(LocateMode.Free);
-  const [locateLocked, setLocateLocked] = useState(false);
   const suppressResetRef = useRef(false);
-
-  const setLocateMode = useCallback((mode: LocateMode) => {
-    locateModeRef.current = mode;
-    setLocateLocked(mode === LocateMode.Locked);
-  }, []);
 
   const moveCamera = useCallback((fn: () => void, duration: number) => {
     suppressResetRef.current = true;
@@ -134,13 +134,41 @@ export default function MapScreen() {
     setTimeout(() => { suppressResetRef.current = false; }, duration + 100);
   }, []);
 
-  // Follow user when locked
+  // --- Compass mode ---
+  const compassModeRef = useRef(CompassMode.Free);
+  const [compassMode, setCompassModeState] = useState(CompassMode.Free);
+
+  const setCompassMode = useCallback((mode: CompassMode) => {
+    compassModeRef.current = mode;
+    setCompassModeState(mode);
+    if (mode === CompassMode.North) {
+      moveCamera(() => cameraRef.current?.setCamera({ heading: 0, animationDuration: 400, animationMode: "easeTo" }), 400);
+      bearingRef.current = 0;
+      setBearing(0);
+      if (userHeadingRef.current !== null) coneRotationAnim.setValue(userHeadingRef.current);
+    }
+  }, [moveCamera, coneRotationAnim]);
+
+  const cycleCompassMode = useCallback(() => {
+    setCompassMode((compassModeRef.current + 1) % 3 as CompassMode);
+  }, [setCompassMode]);
+
+  // --- Locate mode ---
+  const locateModeRef = useRef(LocateMode.Free);
+  const [locateFollowing, setLocateFollowing] = useState(false);
+
+  const setLocateMode = useCallback((mode: LocateMode) => {
+    locateModeRef.current = mode;
+    setLocateFollowing(mode === LocateMode.Following);
+  }, []);
+
+  // Follow user position when locked
   useEffect(() => {
-    if (!locateLocked || !cameraRef.current || !coords) return;
+    if (!locateFollowing || !cameraRef.current || !coords) return;
     moveCamera(() => {
       cameraRef.current!.setCamera({ centerCoordinate: coords, animationDuration: 100, animationMode: "moveTo" });
     }, 100);
-  }, [coords, locateLocked, moveCamera]);
+  }, [coords, locateFollowing, moveCamera]);
 
   const jumpToLocation = useCallback(() => {
     if (!cameraRef.current || !coords) return;
@@ -151,23 +179,21 @@ export default function MapScreen() {
         break;
       case LocateMode.Centered:
         moveCamera(() => cameraRef.current!.setCamera({ centerCoordinate: coords, zoomLevel: 16, animationDuration: 400, animationMode: "flyTo" }), 400);
-        setLocateMode(LocateMode.Zoomed);
+        setLocateMode(LocateMode.Following);
         break;
-      case LocateMode.Zoomed:
-        setLocateMode(LocateMode.Locked);
-        break;
-      case LocateMode.Locked:
+      case LocateMode.Following:
         setLocateMode(LocateMode.Free);
         break;
     }
   }, [coords, setLocateMode, moveCamera]);
 
   const onRegionChanging = useCallback((feature?: { properties?: { isUserInteraction?: boolean; heading?: number } }) => {
-    if (feature?.properties?.isUserInteraction && !suppressResetRef.current && locateModeRef.current > LocateMode.Free) {
-      setLocateMode(LocateMode.Free);
+    if (feature?.properties?.isUserInteraction && !suppressResetRef.current) {
+      if (locateModeRef.current > LocateMode.Free) setLocateMode(LocateMode.Free);
+      if (compassModeRef.current === CompassMode.Heading) setCompassMode(CompassMode.Free);
     }
     updateDotPosition(feature);
-  }, [updateDotPosition, setLocateMode]);
+  }, [updateDotPosition, setLocateMode, setCompassMode]);
 
   const coneRotateStyle = {
     transform: [
@@ -190,6 +216,7 @@ export default function MapScreen() {
         logoEnabled={false}
         attributionEnabled={false}
         compassEnabled={false}
+        rotateEnabled={compassMode === CompassMode.Free}
         onRegionIsChanging={onRegionChanging}
         onRegionDidChange={updateDotPosition}
       >
@@ -242,12 +269,14 @@ export default function MapScreen() {
       )}
 
       <View style={styles.buttonRow}>
-        <HapticPressable onPress={resetNorth}>
+        <HapticPressable onPress={cycleCompassMode}>
           <MaterialIcons
-            name="explore"
+            name={compassMode === CompassMode.Heading ? "navigation" : "explore"}
             size={n(48)}
             color={invertColors ? "black" : "white"}
-            style={{ transform: [{ rotate: `${-bearing - 45}deg` }] }}
+            style={compassMode === CompassMode.Free
+              ? { transform: [{ rotate: `${-bearing - 45}deg` }] }
+              : undefined}
           />
         </HapticPressable>
         {activeRoute && (
@@ -256,7 +285,7 @@ export default function MapScreen() {
           </HapticPressable>
         )}
         <HapticPressable onPress={jumpToLocation}>
-          <MaterialIcons name={locateLocked ? "gps-fixed" : "gps-not-fixed"} size={n(48)} color={invertColors ? "black" : "white"} />
+          <MaterialIcons name={locateFollowing ? "gps-fixed" : "gps-not-fixed"} size={n(48)} color={invertColors ? "black" : "white"} />
         </HapticPressable>
       </View>
     </View>

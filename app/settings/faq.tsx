@@ -22,7 +22,7 @@ const FAQS = [
   },
   {
     q: "Colors are not working",
-    a: "Your phone may be in grayscale mode. Change it in the Android layer accessibility settings.",
+    a: "Your phone may be in grayscale mode. Change it in the Android layer accessibility settings. You can also enter the Album app in LightOS to disable grayscale, then immediately use your keypress shortcut to switch to the Android layer.",
   }
 ];
 

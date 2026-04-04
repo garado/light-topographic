@@ -18,26 +18,11 @@ export default function SettingsScreen() {
     }
   }, [params.confirmed, params.action]);
 
-  const handleConfirmExample = () => {
-    router.push({
-      pathname: "/confirm",
-      params: {
-        title: "Example Confirm",
-        message:
-          "This is an example confirmation screen.\n\nAre you sure you want to proceed?",
-        confirmText: "Yes",
-        action: "exampleAction",
-        returnPath: "/(tabs)/settings",
-      },
-    });
-  };
-
   return (
     <ContentContainer headerTitle="Settings" hideBackButton>
       <StyledButton onPress={() => router.push("/settings/customise")} text="Customise" />
       <StyledButton onPress={() => router.push("/settings/cached-tiles")} text="Cached Tiles" />
       <StyledButton onPress={() => router.push("/settings/faq")} text="FAQ" />
-      <StyledButton onPress={handleConfirmExample} text="Example Confirm" />
     </ContentContainer>
   );
 }
