@@ -100,6 +100,26 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         paint: { "line-color": waterwayColor, "line-width": 1 },
       },
 
+      // Water names
+      {
+        id: "water-names",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "water_name",
+        layout: {
+          ...vis("water"),
+          "text-field": ["get", "name"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 11,
+          "symbol-placement": "point",
+        },
+        paint: {
+          "text-color": labelColor,
+          "text-halo-color": textHaloColor,
+          "text-halo-width": 1.5,
+        },
+      },
+
       // Contours — regular
       {
         id: "contour",
@@ -172,6 +192,28 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         layout: vis("roads"),
         filter: ["in", "class", "primary", "trunk", "motorway"],
         paint: { "line-color": roadMajorColor, "line-width": 2.5 },
+      },
+
+      // Road labels
+      {
+        id: "road-labels",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "transportation_name",
+        layout: {
+          ...vis("roads"),
+          "symbol-placement": "line",
+          "text-field": ["get", "name"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 10,
+          "text-max-angle": 30,
+          "symbol-spacing": 300,
+        },
+        paint: {
+          "text-color": labelColor,
+          "text-halo-color": textHaloColor,
+          "text-halo-width": 1.5,
+        },
       },
 
       // Trails — from dedicated trail source
