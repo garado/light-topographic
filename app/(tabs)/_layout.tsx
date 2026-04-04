@@ -12,6 +12,8 @@ export const TABS_CONFIG: readonly TabConfigItem[] = [
 export default function TabLayout() {
   return (
     <Tabs
+      sceneContainerStyle={{ backgroundColor: "black" }}
+      screenOptions={{ animation: "none" }}
       tabBar={(props) => {
         const activeScreenName = props.state.routes[props.state.index].name;
         return (

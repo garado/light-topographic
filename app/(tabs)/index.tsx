@@ -86,7 +86,7 @@ export default function MapScreen() {
   }, [coords]);
 
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: "black" }]}>
       <MapLibreGL.MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
