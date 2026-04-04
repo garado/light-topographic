@@ -11,6 +11,7 @@ const LAYER_LABELS: Record<keyof MapLayers, string> = {
   roads: "Roads",
   water: "Water",
   labels: "Labels",
+  route: "Route",
 };
 
 function LayerRow({

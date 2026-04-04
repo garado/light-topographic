@@ -105,11 +105,15 @@ export default function MapScreen() {
             animationMode="none"
           />
         )}
-        {activeRoute && (
+        {activeRoute && layers.route.visible && (
           <MapLibreGL.ShapeSource id="route" shape={activeRoute.geojson}>
             <MapLibreGL.LineLayer
               id="route-line"
-              style={{ lineColor: "#FFD700", lineWidth: 3, lineOpacity: 0.9 }}
+              style={{
+                lineColor: layers.route.color ? "#ebcb8b" : "#ffffff",
+                lineWidth: 3,
+                lineOpacity: 0.9,
+              }}
             />
           </MapLibreGL.ShapeSource>
         )}

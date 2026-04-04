@@ -9,6 +9,7 @@ export type MapLayers = {
   roads: LayerSettings;
   labels: LayerSettings;
   water: LayerSettings;
+  route: LayerSettings;
 };
 
 const DEFAULT_LAYERS: MapLayers = {
@@ -17,6 +18,7 @@ const DEFAULT_LAYERS: MapLayers = {
   roads: { visible: true, color: false },
   labels: { visible: true, color: false },
   water: { visible: true, color: true },
+  route: { visible: true, color: true },
 };
 
 interface MapLayersContextType {
