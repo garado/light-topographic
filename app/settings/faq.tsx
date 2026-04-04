@@ -6,7 +6,7 @@ import { n } from "@/utils/scaling";
 const FAQS = [
   {
     q: "The direction cone is inaccurate",
-    a: "The cone uses your phone's magnetometer (compass). Nearby metal objects - credit cards, keys, phone cases with magnetics or magnetic cards - can interfere with it and cause incorrect readings. Remove metal objects from near your phone.",
+    a: "The cone uses your phone's magnetometer (compass). Nearby metal objects - metal credit cards, keys - can interfere with it and cause incorrect readings. Remove metal objects from near your phone.",
   },
   {
     q: "Location does not appear",
@@ -20,6 +20,10 @@ const FAQS = [
     q: "Trail names are not showing",
     a: "Trail names appear at higher zoom levels. Zoom in further and they should show up. You can also check the Layers tab to confirm trails are enabled.",
   },
+  {
+    q: "Colors are not working",
+    a: "Your phone may be in grayscale mode. Change it in the Android layer accessibility settings.",
+  }
 ];
 
 function FaqItem({ q, a }: { q: string; a: string }) {
