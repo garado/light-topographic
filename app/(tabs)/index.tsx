@@ -8,6 +8,7 @@ import { HapticPressable } from "@/components/HapticPressable";
 import { n } from "@/utils/scaling";
 import { buildMapStyle } from "@/utils/mapStyle";
 import { useMapLayers } from "@/contexts/MapLayersContext";
+import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useRoutes } from "@/contexts/RoutesContext";
 MapLibreGL.setAccessToken("pk.placeholder");
 MapLibreGL.offlineManager.setTileCountLimit(5000);
@@ -18,7 +19,8 @@ const CONE_HALF_WIDTH = DOT_SIZE / 2;
 
 export default function MapScreen() {
   const { layers } = useMapLayers();
-  const MAP_STYLE = useMemo(() => buildMapStyle(layers), [layers]);
+  const { invertColors } = useInvertColors();
+  const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors), [layers, invertColors]);
   const { activeRoute } = useRoutes();
 
   const mapRef = useRef<MapLibreGL.MapView>(null);
@@ -176,7 +178,7 @@ export default function MapScreen() {
           ]}
           pointerEvents="none"
         >
-          <View style={styles.cone} />
+          <View style={[styles.cone, { borderBottomColor: invertColors ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.25)" }]} />
           {/* bottom half is empty — exists so container center aligns with dot */}
         </Animated.View>
       )}
@@ -186,6 +188,7 @@ export default function MapScreen() {
           style={[
             styles.locationDot,
             { left: dotScreenPos.x - DOT_SIZE / 2, top: dotScreenPos.y - DOT_SIZE / 2 },
+            { backgroundColor: invertColors ? "#000000" : "#ffffff" },
           ]}
           pointerEvents="none"
         />
@@ -196,17 +199,17 @@ export default function MapScreen() {
           <MaterialIcons
             name="explore"
             size={n(48)}
-            color="white"
+            color={invertColors ? "black" : "white"}
             style={{ transform: [{ rotate: `${-bearing - 45}deg` }] }}
           />
         </HapticPressable>
         {activeRoute && (
           <HapticPressable onPress={zoomToRoute}>
-            <MaterialIcons name="route" size={n(48)} color="white" />
+            <MaterialIcons name="route" size={n(48)} color={invertColors ? "black" : "white"} />
           </HapticPressable>
         )}
         <HapticPressable onPress={jumpToLocation}>
-          <MaterialIcons name="my-location" size={n(48)} color="white" />
+          <MaterialIcons name="my-location" size={n(48)} color={invertColors ? "black" : "white"} />
         </HapticPressable>
       </View>
     </View>

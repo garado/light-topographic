@@ -2,21 +2,34 @@ import type { MapLayers } from "@/contexts/MapLayersContext";
 
 const TILE_BASE = "https://tiles.openstreetmap.us/vector";
 
-export function buildMapStyle(layers: MapLayers, offlineOnly = false) {
+export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOnly = false) {
   const tileUrl = (path: string) =>
     offlineOnly ? `http://localhost:0/${path}/{z}/{x}/{y}` : `${TILE_BASE}/${path}/{z}/{x}/{y}.mvt`;
   const vis = (key: keyof MapLayers) =>
     ({ visibility: layers[key].visible ? "visible" : "none" } as const);
 
-  const contourColor = layers.contours.color ? "#c87941" : "#ffffff";
-  const contourIndexColor = layers.contours.color ? "#a05020" : "#ffffff";
-  const trailColor = layers.trails.color ? "#a3be8c" : "#888888";
-  const trailLabelColor = layers.trails.color ? "#a3be8c" : "#aaaaaa";
-  const waterFillColor = layers.water.color ? "#5e81ac" : "#262626";
-  const waterwayColor = layers.water.color ? "#5e81ac" : "#2d2d2d";
-  const roadMinorColor = layers.roads.color ? "#262626" : "#262626";
-  const roadMediumColor = layers.roads.color ? "#313131" : "#313131";
-  const roadMajorColor = layers.roads.color ? "#424242" : "#424242";
+  const dark = !invertColors;
+  const colored = (key: keyof MapLayers) => layers[key].color;
+
+  // Base theme palette
+  const bgColor         = dark ? "#000000" : "#ffffff";
+  const landcoverColor  = dark ? "#0d0d0d"  : "#f0f0f0";
+  const landuseColor    = dark ? "#141414"  : "#e8e8e8";
+  const parkColor       = dark ? "#161616"  : "#e4ede4";
+  const labelColor      = dark ? "#ffffff"  : "#111111";
+  const labelHalo       = dark ? "#000000"  : "#ffffff";
+  const peakLabelColor  = dark ? "#cccccc"  : "#333333";
+  const textHaloColor   = dark ? "#0d0d0d"  : "#ffffff";
+
+  const contourColor      = colored("contours") ? "#c87941" : (dark ? "#ffffff" : "#777777");
+  const contourIndexColor = colored("contours") ? "#a05020" : (dark ? "#ffffff" : "#555555");
+  const trailColor        = colored("trails")   ? "#a3be8c" : (dark ? "#888888" : "#777777");
+  const trailLabelColor   = colored("trails")   ? "#a3be8c" : (dark ? "#aaaaaa" : "#666666");
+  const waterFillColor    = colored("water")    ? "#5e81ac" : (dark ? "#262626" : "#c4d8ec");
+  const waterwayColor     = colored("water")    ? "#5e81ac" : (dark ? "#2d2d2d" : "#c4d8ec");
+  const roadMinorColor    = dark ? "#262626" : "#cccccc";
+  const roadMediumColor   = dark ? "#313131" : "#bbbbbb";
+  const roadMajorColor    = dark ? "#424242" : "#aaaaaa";
 
   return JSON.stringify({
     version: 8,
@@ -44,7 +57,7 @@ export function buildMapStyle(layers: MapLayers, offlineOnly = false) {
     },
     layers: [
       // Background
-      { id: "background", type: "background", paint: { "background-color": "#000000" } },
+      { id: "background", type: "background", paint: { "background-color": bgColor } },
 
       // Land
       {
@@ -52,21 +65,21 @@ export function buildMapStyle(layers: MapLayers, offlineOnly = false) {
         type: "fill",
         source: "osm",
         "source-layer": "landcover",
-        paint: { "fill-color": "#0d0d0d" },
+        paint: { "fill-color": landcoverColor },
       },
       {
         id: "landuse",
         type: "fill",
         source: "osm",
         "source-layer": "landuse",
-        paint: { "fill-color": "#141414" },
+        paint: { "fill-color": landuseColor },
       },
       {
         id: "park",
         type: "fill",
         source: "osm",
         "source-layer": "park",
-        paint: { "fill-color": "#161616" },
+        paint: { "fill-color": parkColor },
       },
 
       // Water
@@ -191,7 +204,7 @@ export function buildMapStyle(layers: MapLayers, offlineOnly = false) {
         },
         paint: {
           "text-color": trailLabelColor,
-          "text-halo-color": "#000000",
+          "text-halo-color": textHaloColor,
           "text-halo-width": 1.5,
         },
       },
@@ -210,8 +223,8 @@ export function buildMapStyle(layers: MapLayers, offlineOnly = false) {
           "text-max-width": 8,
         },
         paint: {
-          "text-color": "#ffffff",
-          "text-halo-color": "#000000",
+          "text-color": labelColor,
+          "text-halo-color": labelHalo,
           "text-halo-width": 1.5,
         },
       },
@@ -231,8 +244,8 @@ export function buildMapStyle(layers: MapLayers, offlineOnly = false) {
           "text-offset": [0, 0.5],
         },
         paint: {
-          "text-color": "#cccccc",
-          "text-halo-color": "#000000",
+          "text-color": peakLabelColor,
+          "text-halo-color": labelHalo,
           "text-halo-width": 1.5,
         },
       },
