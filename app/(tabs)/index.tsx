@@ -1,15 +1,13 @@
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import Geolocation from "@react-native-community/geolocation";
-import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
 import { n } from "@/utils/scaling";
-import { parseGpx, type GpxRoute } from "@/utils/parseGpx";
 import { buildMapStyle } from "@/utils/mapStyle";
 import { useMapLayers } from "@/contexts/MapLayersContext";
+import { useRoutes } from "@/contexts/RoutesContext";
 MapLibreGL.setAccessToken("pk.placeholder");
 
 const DOT_SIZE = 20;
@@ -18,13 +16,13 @@ const DOT_INNER_SIZE = 10;
 export default function MapScreen() {
   const { layers } = useMapLayers();
   const MAP_STYLE = useMemo(() => buildMapStyle(layers), [layers]);
+  const { activeRoute } = useRoutes();
 
   const mapRef = useRef<MapLibreGL.MapView>(null);
   const cameraRef = useRef<MapLibreGL.Camera>(null);
   const [coords, setCoords] = useState<[number, number] | null>(null);
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [bearing, setBearing] = useState(0);
-  const [route, setRoute] = useState<GpxRoute | null>(null);
 
   const fetchLocation = useCallback(() => {
     Geolocation.getCurrentPosition(
@@ -57,6 +55,16 @@ export default function MapScreen() {
     updateDotPosition();
   }, [updateDotPosition]);
 
+  useEffect(() => {
+    if (!activeRoute || !cameraRef.current) return;
+    cameraRef.current.fitBounds(
+      [activeRoute.bounds[2], activeRoute.bounds[3]],
+      [activeRoute.bounds[0], activeRoute.bounds[1]],
+      50,
+      600,
+    );
+  }, [activeRoute]);
+
   const resetNorth = useCallback(() => {
     cameraRef.current?.setCamera({ heading: 0, animationDuration: 400 });
     setBearing(0);
@@ -66,26 +74,6 @@ export default function MapScreen() {
     if (!cameraRef.current || !coords) return;
     cameraRef.current.flyTo(coords, 400);
   }, [coords]);
-
-  const loadGpx = useCallback(async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["application/gpx+xml", "text/xml", "application/xml", "*/*"],
-      copyToCacheDirectory: true,
-    });
-    if (result.canceled || !result.assets[0]) return;
-
-    const content = await FileSystem.readAsStringAsync(result.assets[0].uri);
-    const parsed = parseGpx(content);
-    if (!parsed) return;
-
-    setRoute(parsed);
-    cameraRef.current?.fitBounds(
-      [parsed.bounds[2], parsed.bounds[3]],
-      [parsed.bounds[0], parsed.bounds[1]],
-      50,
-      600,
-    );
-  }, []);
 
   return (
     <View style={StyleSheet.absoluteFill}>
@@ -107,8 +95,8 @@ export default function MapScreen() {
             animationMode="none"
           />
         )}
-        {route && (
-          <MapLibreGL.ShapeSource id="route" shape={route.geojson}>
+        {activeRoute && (
+          <MapLibreGL.ShapeSource id="route" shape={activeRoute.geojson}>
             <MapLibreGL.LineLayer
               id="route-line"
               style={{ lineColor: "#FFD700", lineWidth: 3, lineOpacity: 0.9 }}
@@ -130,9 +118,6 @@ export default function MapScreen() {
       )}
 
       <View style={styles.buttonRow}>
-        <HapticPressable onPress={loadGpx}>
-          <MaterialIcons name="route" size={n(48)} color="white" />
-        </HapticPressable>
         <HapticPressable onPress={resetNorth}>
           <MaterialIcons
             name="explore"
