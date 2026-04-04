@@ -274,9 +274,7 @@ export default function MapScreen() {
             name={compassMode === CompassMode.Heading ? "navigation" : "explore"}
             size={n(48)}
             color={invertColors ? "black" : "white"}
-            style={compassMode === CompassMode.Free
-              ? { transform: [{ rotate: `${-bearing - 45}deg` }] }
-              : undefined}
+            style={{ transform: [{ rotate: compassMode === CompassMode.Free ? `${-bearing - 45}deg` : "-45deg" }] }}
           />
         </HapticPressable>
         {activeRoute && (
