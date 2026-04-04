@@ -24,11 +24,13 @@ const DEFAULT_LAYERS: MapLayers = {
 interface MapLayersContextType {
   layers: MapLayers;
   setLayer: (key: keyof MapLayers, field: keyof LayerSettings, value: boolean) => void;
+  setAllLayers: (layers: MapLayers) => void;
 }
 
 const MapLayersContext = createContext<MapLayersContextType>({
   layers: DEFAULT_LAYERS,
   setLayer: () => {},
+  setAllLayers: () => {},
 });
 
 export const useMapLayers = () => useContext(MapLayersContext);
@@ -44,7 +46,7 @@ export const MapLayersProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <MapLayersContext.Provider value={{ layers, setLayer }}>
+    <MapLayersContext.Provider value={{ layers, setLayer, setAllLayers: setLayers }}>
       {children}
     </MapLayersContext.Provider>
   );

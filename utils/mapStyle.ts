@@ -1,6 +1,10 @@
 import type { MapLayers } from "@/contexts/MapLayersContext";
 
-export function buildMapStyle(layers: MapLayers) {
+const TILE_BASE = "https://tiles.openstreetmap.us/vector";
+
+export function buildMapStyle(layers: MapLayers, offlineOnly = false) {
+  const tileUrl = (path: string) =>
+    offlineOnly ? `http://localhost:0/${path}/{z}/{x}/{y}` : `${TILE_BASE}/${path}/{z}/{x}/{y}.mvt`;
   const vis = (key: keyof MapLayers) =>
     ({ visibility: layers[key].visible ? "visible" : "none" } as const);
 
@@ -20,27 +24,27 @@ export function buildMapStyle(layers: MapLayers) {
     sources: {
       osm: {
         type: "vector",
-        tiles: ["https://tiles.openstreetmap.us/vector/openmaptiles/{z}/{x}/{y}.mvt"],
+        tiles: [tileUrl("openmaptiles")],
         minzoom: 0,
         maxzoom: 14,
         attribution: "© OpenStreetMap contributors",
       },
       trails: {
         type: "vector",
-        tiles: ["https://tiles.openstreetmap.us/vector/trails/{z}/{x}/{y}.mvt"],
+        tiles: [tileUrl("trails")],
         minzoom: 5,
         maxzoom: 14,
       },
       contours: {
         type: "vector",
-        tiles: ["https://tiles.openstreetmap.us/vector/contours-feet/{z}/{x}/{y}.mvt"],
+        tiles: [tileUrl("contours-feet")],
         minzoom: 8,
         maxzoom: 12,
       },
     },
     layers: [
       // Background
-      { id: "background", type: "background", paint: { "background-color": "#0d0d0d" } },
+      { id: "background", type: "background", paint: { "background-color": "#000000" } },
 
       // Land
       {
@@ -48,21 +52,21 @@ export function buildMapStyle(layers: MapLayers) {
         type: "fill",
         source: "osm",
         "source-layer": "landcover",
-        paint: { "fill-color": "#141414" },
+        paint: { "fill-color": "#0d0d0d" },
       },
       {
         id: "landuse",
         type: "fill",
         source: "osm",
         "source-layer": "landuse",
-        paint: { "fill-color": "#161616" },
+        paint: { "fill-color": "#141414" },
       },
       {
         id: "park",
         type: "fill",
         source: "osm",
         "source-layer": "park",
-        paint: { "fill-color": "#1a1a1a" },
+        paint: { "fill-color": "#161616" },
       },
 
       // Water
