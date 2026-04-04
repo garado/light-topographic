@@ -9,6 +9,10 @@
 - Display current GPS location with directional indicator
 - Load GPX routes for navigation
 
+<p align="center">
+    <img src="assets/images/layers.gif" alt="Layers with adjustable toggle/color.">
+</p>
+
 ## Known issues
 
 The Light Phone's magnetometer (compass) is quite sensitive to outside interefence. This means that anything metal near the Light Phone can cause the directional indicator to lose accuracy. This includes a metal credit card in a DumbWireless case, which I found out after a very confusing debugging session.
