@@ -146,8 +146,10 @@ export default function MapScreen() {
       bearingRef.current = 0;
       setBearing(0);
       if (userHeadingRef.current !== null) coneRotationAnim.setValue(userHeadingRef.current);
+    } else if (mode === CompassMode.Heading) {
+      setLocateMode(LocateMode.Following);
     }
-  }, [moveCamera, coneRotationAnim]);
+  }, [moveCamera, coneRotationAnim, setLocateMode]);
 
   const cycleCompassMode = useCallback(() => {
     setCompassMode((compassModeRef.current + 1) % 3 as CompassMode);
@@ -156,10 +158,12 @@ export default function MapScreen() {
   // --- Locate mode ---
   const locateModeRef = useRef(LocateMode.Free);
   const [locateFollowing, setLocateFollowing] = useState(false);
+  const lockBearingRef = useRef(0);
 
   const setLocateMode = useCallback((mode: LocateMode) => {
     locateModeRef.current = mode;
     setLocateFollowing(mode === LocateMode.Following);
+    if (mode === LocateMode.Following) lockBearingRef.current = bearingRef.current;
   }, []);
 
   // Follow user position when locked
@@ -187,9 +191,40 @@ export default function MapScreen() {
     }
   }, [coords, setLocateMode, moveCamera]);
 
-  const onRegionChanging = useCallback((feature?: { properties?: { isUserInteraction?: boolean; heading?: number } }) => {
+  const onRegionChanging = useCallback((feature?: {
+    geometry?: { coordinates?: [number, number] };
+    properties?: { isUserInteraction?: boolean; heading?: number; zoomLevel?: number };
+  }) => {
     if (feature?.properties?.isUserInteraction && !suppressResetRef.current) {
-      if (locateModeRef.current > LocateMode.Free) setLocateMode(LocateMode.Free);
+      if (locateModeRef.current === LocateMode.Following) {
+        const center = feature.geometry?.coordinates;
+        const user = coordsRef.current;
+        const currentBearing = feature.properties?.heading ?? bearingRef.current;
+        const zoomLevel = feature.properties?.zoomLevel ?? 16;
+
+        // Pan: any movement exits immediately
+        if (center && user) {
+          const dist = Math.abs(center[0] - user[0]) + Math.abs(center[1] - user[1]);
+          if (dist > 0.0001) { setLocateMode(LocateMode.Free); return; }
+        }
+
+        // Rotate: snap back until threshold, then exit
+        let bearingDiff = Math.abs(currentBearing - lockBearingRef.current);
+        if (bearingDiff > 180) bearingDiff = 360 - bearingDiff;
+        if (bearingDiff > 50) {
+          setLocateMode(LocateMode.Free); return;
+        } else if (bearingDiff > 0) {
+          suppressResetRef.current = true;
+          cameraRef.current?.setCamera({ heading: lockBearingRef.current, animationDuration: 0, animationMode: "none" });
+          setTimeout(() => { suppressResetRef.current = false; }, 50);
+        }
+
+        // Zoom out past a threshold exits
+        if (zoomLevel < 12) { setLocateMode(LocateMode.Free); return; }
+
+      } else if (locateModeRef.current > LocateMode.Free) {
+        setLocateMode(LocateMode.Free);
+      }
       if (compassModeRef.current === CompassMode.North || compassModeRef.current === CompassMode.Heading) {
         setCompassMode(CompassMode.Free);
       }
