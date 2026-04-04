@@ -11,6 +11,8 @@ import { useMapLayers } from "@/contexts/MapLayersContext";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useRoutes } from "@/contexts/RoutesContext";
 MapLibreGL.setAccessToken("pk.placeholder");
+
+enum LocateMode { Free, Centered, Zoomed, Locked }
 MapLibreGL.offlineManager.setTileCountLimit(5000);
 
 const DOT_SIZE = 12;
@@ -117,10 +119,55 @@ export default function MapScreen() {
     }
   }, [coneRotationAnim]);
 
+  const locateModeRef = useRef(LocateMode.Free);
+  const [locateLocked, setLocateLocked] = useState(false);
+  const suppressResetRef = useRef(false);
+
+  const setLocateMode = useCallback((mode: LocateMode) => {
+    locateModeRef.current = mode;
+    setLocateLocked(mode === LocateMode.Locked);
+  }, []);
+
+  const moveCamera = useCallback((fn: () => void, duration: number) => {
+    suppressResetRef.current = true;
+    fn();
+    setTimeout(() => { suppressResetRef.current = false; }, duration + 100);
+  }, []);
+
+  // Follow user when locked
+  useEffect(() => {
+    if (!locateLocked || !cameraRef.current || !coords) return;
+    moveCamera(() => {
+      cameraRef.current!.setCamera({ centerCoordinate: coords, animationDuration: 100, animationMode: "moveTo" });
+    }, 100);
+  }, [coords, locateLocked, moveCamera]);
+
   const jumpToLocation = useCallback(() => {
     if (!cameraRef.current || !coords) return;
-    cameraRef.current.flyTo(coords, 400);
-  }, [coords]);
+    switch (locateModeRef.current) {
+      case LocateMode.Free:
+        moveCamera(() => cameraRef.current!.flyTo(coords, 400), 400);
+        setLocateMode(LocateMode.Centered);
+        break;
+      case LocateMode.Centered:
+        moveCamera(() => cameraRef.current!.setCamera({ centerCoordinate: coords, zoomLevel: 16, animationDuration: 400, animationMode: "flyTo" }), 400);
+        setLocateMode(LocateMode.Zoomed);
+        break;
+      case LocateMode.Zoomed:
+        setLocateMode(LocateMode.Locked);
+        break;
+      case LocateMode.Locked:
+        setLocateMode(LocateMode.Free);
+        break;
+    }
+  }, [coords, setLocateMode, moveCamera]);
+
+  const onRegionChanging = useCallback((feature?: { properties?: { isUserInteraction?: boolean; heading?: number } }) => {
+    if (feature?.properties?.isUserInteraction && !suppressResetRef.current && locateModeRef.current > LocateMode.Free) {
+      setLocateMode(LocateMode.Free);
+    }
+    updateDotPosition(feature);
+  }, [updateDotPosition, setLocateMode]);
 
   const coneRotateStyle = {
     transform: [
@@ -143,7 +190,7 @@ export default function MapScreen() {
         logoEnabled={false}
         attributionEnabled={false}
         compassEnabled={false}
-        onRegionIsChanging={updateDotPosition}
+        onRegionIsChanging={onRegionChanging}
         onRegionDidChange={updateDotPosition}
       >
         <MapLibreGL.Camera
@@ -209,7 +256,7 @@ export default function MapScreen() {
           </HapticPressable>
         )}
         <HapticPressable onPress={jumpToLocation}>
-          <MaterialIcons name="my-location" size={n(48)} color={invertColors ? "black" : "white"} />
+          <MaterialIcons name={locateLocked ? "gps-fixed" : "gps-not-fixed"} size={n(48)} color={invertColors ? "black" : "white"} />
         </HapticPressable>
       </View>
     </View>
