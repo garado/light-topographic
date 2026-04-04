@@ -1,7 +1,8 @@
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import Geolocation from "@react-native-community/geolocation";
+import CompassHeading from "react-native-compass-heading";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PermissionsAndroid, StyleSheet, View } from "react-native";
+import { Animated, PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
 import { n } from "@/utils/scaling";
@@ -10,8 +11,9 @@ import { useMapLayers } from "@/contexts/MapLayersContext";
 import { useRoutes } from "@/contexts/RoutesContext";
 MapLibreGL.setAccessToken("pk.placeholder");
 
-const DOT_SIZE = 20;
-const DOT_INNER_SIZE = 10;
+const DOT_SIZE = 12;
+const CONE_HEIGHT = DOT_SIZE * 1.5;
+const CONE_HALF_WIDTH = DOT_SIZE / 2;
 
 export default function MapScreen() {
   const { layers } = useMapLayers();
@@ -20,17 +22,18 @@ export default function MapScreen() {
 
   const mapRef = useRef<MapLibreGL.MapView>(null);
   const cameraRef = useRef<MapLibreGL.Camera>(null);
+  const watchIdRef = useRef<number | null>(null);
+
+  // Heading tracked as refs to avoid re-renders; Animated.Value drives the cone
+  const userHeadingRef = useRef<number | null>(null);
+  const bearingRef = useRef(0);
+  const coneRotationAnim = useRef(new Animated.Value(0)).current;
+  const [hasHeading, setHasHeading] = useState(false);
+
   const [coords, setCoords] = useState<[number, number] | null>(null);
+  const [initialCoords, setInitialCoords] = useState<[number, number] | null>(null);
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [bearing, setBearing] = useState(0);
-
-  const fetchLocation = useCallback(() => {
-    Geolocation.getCurrentPosition(
-      (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
-      (err) => console.error("Location error:", err),
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  }, []);
 
   useEffect(() => {
     (async () => {
@@ -38,18 +41,45 @@ export default function MapScreen() {
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
       if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
-      fetchLocation();
+
+      watchIdRef.current = Geolocation.watchPosition(
+        (pos) => {
+          const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
+          setCoords(c);
+          setInitialCoords((prev) => prev ?? c);
+        },
+        (err) => console.error("Location error:", err),
+        { enableHighAccuracy: true, distanceFilter: 0 },
+      );
     })();
-  }, [fetchLocation]);
+
+    CompassHeading.start(1, ({ heading }: { heading: number }) => {
+      userHeadingRef.current = heading;
+      coneRotationAnim.setValue(heading - bearingRef.current);
+      if (!hasHeading) setHasHeading(true);
+    });
+
+    return () => {
+      if (watchIdRef.current != null) {
+        Geolocation.clearWatch(watchIdRef.current);
+      }
+      CompassHeading.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateDotPosition = useCallback(async (feature?: { properties?: { heading?: number } }) => {
     if (feature?.properties?.heading !== undefined) {
+      bearingRef.current = feature.properties.heading;
       setBearing(feature.properties.heading);
+      if (userHeadingRef.current !== null) {
+        coneRotationAnim.setValue(userHeadingRef.current - feature.properties.heading);
+      }
     }
     if (!mapRef.current || !coords) return;
     const point = await mapRef.current.getPointInView(coords);
     setDotScreenPos({ x: point[0], y: point[1] });
-  }, [coords]);
+  }, [coords, coneRotationAnim]);
 
   useEffect(() => {
     updateDotPosition();
@@ -77,13 +107,29 @@ export default function MapScreen() {
 
   const resetNorth = useCallback(() => {
     cameraRef.current?.setCamera({ heading: 0, animationDuration: 400 });
+    bearingRef.current = 0;
     setBearing(0);
-  }, []);
+    if (userHeadingRef.current !== null) {
+      coneRotationAnim.setValue(userHeadingRef.current);
+    }
+  }, [coneRotationAnim]);
 
   const jumpToLocation = useCallback(() => {
     if (!cameraRef.current || !coords) return;
     cameraRef.current.flyTo(coords, 400);
   }, [coords]);
+
+  const coneRotateStyle = {
+    transform: [
+      {
+        rotate: coneRotationAnim.interpolate({
+          inputRange: [-720, 720],
+          outputRange: ["-720deg", "720deg"],
+          extrapolate: "extend",
+        }),
+      },
+    ],
+  };
 
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: "black" }]}>
@@ -97,11 +143,11 @@ export default function MapScreen() {
         onRegionIsChanging={updateDotPosition}
         onRegionDidChange={updateDotPosition}
       >
-        {coords && (
+        {initialCoords && (
           <MapLibreGL.Camera
             ref={cameraRef}
             zoomLevel={13}
-            centerCoordinate={coords}
+            centerCoordinate={initialCoords}
             animationMode="none"
           />
         )}
@@ -119,16 +165,31 @@ export default function MapScreen() {
         )}
       </MapLibreGL.MapView>
 
-      {dotScreenPos && (
-        <View
+      {dotScreenPos && hasHeading && (
+        <Animated.View
           style={[
-            styles.locationDotOuter,
-            { left: dotScreenPos.x - DOT_SIZE / 2, top: dotScreenPos.y - DOT_SIZE / 2 },
+            styles.coneContainer,
+            {
+              left: dotScreenPos.x - CONE_HALF_WIDTH,
+              top: dotScreenPos.y - CONE_HEIGHT,
+            },
+            coneRotateStyle,
           ]}
           pointerEvents="none"
         >
-          <View style={styles.locationDotInner} />
-        </View>
+          <View style={styles.cone} />
+          {/* bottom half is empty — exists so container center aligns with dot */}
+        </Animated.View>
+      )}
+
+      {dotScreenPos && (
+        <View
+          style={[
+            styles.locationDot,
+            { left: dotScreenPos.x - DOT_SIZE / 2, top: dotScreenPos.y - DOT_SIZE / 2 },
+          ]}
+          pointerEvents="none"
+        />
       )}
 
       <View style={styles.buttonRow}>
@@ -154,19 +215,28 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  locationDotOuter: {
+  coneContainer: {
+    position: "absolute",
+    width: CONE_HALF_WIDTH * 2,
+    height: CONE_HEIGHT * 2,  // double height: center = dot, cone in top half
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+  cone: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: CONE_HALF_WIDTH,
+    borderRightWidth: CONE_HALF_WIDTH,
+    borderBottomWidth: CONE_HEIGHT,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "rgba(255, 255, 255, 0.25)",
+  },
+  locationDot: {
     position: "absolute",
     width: DOT_SIZE,
     height: DOT_SIZE,
     borderRadius: DOT_SIZE / 2,
-    backgroundColor: "rgba(255, 255, 255, 0.25)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  locationDotInner: {
-    width: DOT_INNER_SIZE,
-    height: DOT_INNER_SIZE,
-    borderRadius: DOT_INNER_SIZE / 2,
     backgroundColor: "#ffffff",
   },
   buttonRow: {
