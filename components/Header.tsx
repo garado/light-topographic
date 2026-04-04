@@ -10,19 +10,23 @@ interface RightAction {
   icon: keyof typeof MaterialIcons.glyphMap;
   onPress: () => void;
   show?: boolean;
+  active?: boolean;
 }
 
 interface HeaderProps {
   headerTitle?: string;
   hideBackButton?: boolean;
   rightAction?: RightAction;
+  rightActions?: RightAction[];
 }
 
 export function Header({
   headerTitle,
   hideBackButton = false,
   rightAction,
+  rightActions,
 }: HeaderProps) {
+  const actions = rightActions ?? (rightAction ? [rightAction] : []);
   const { invertColors } = useInvertColors();
   const iconColor = invertColors ? "black" : "white";
 
@@ -52,19 +56,24 @@ export function Header({
           </View>
         </HapticPressable>
       )}
-      <StyledText numberOfLines={1} style={styles.title}>
+      <StyledText numberOfLines={1} style={styles.title} pointerEvents="none">
         {headerTitle}
       </StyledText>
-      {rightAction?.show !== false && rightAction?.icon ? (
-        <HapticPressable onPress={rightAction.onPress}>
-          <View style={styles.button}>
-            <MaterialIcons
-              color={iconColor}
-              name={rightAction.icon}
-              size={n(28)}
-            />
-          </View>
-        </HapticPressable>
+      {actions.length > 0 ? (
+        <View style={styles.rightActions}>
+          {actions.filter((a) => a.show !== false).map((a) => (
+            <HapticPressable key={a.icon} onPress={a.onPress}>
+              <View style={styles.button}>
+                <MaterialIcons
+                  color={iconColor}
+                  name={a.icon}
+                  size={n(28)}
+                  style={{ opacity: a.active === false ? 0.4 : 1 }}
+                />
+              </View>
+            </HapticPressable>
+          ))}
+        </View>
       ) : (
         <View style={styles.button} />
       )}
@@ -82,10 +91,13 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   title: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
     fontSize: n(20),
     fontFamily: "PublicSans-Regular",
     paddingTop: n(2),
-    maxWidth: "75%",
   },
   button: {
     width: n(32),
@@ -93,5 +105,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: n(6),
     paddingRight: n(4),
+  },
+  rightActions: {
+    flexDirection: "row",
+    gap: n(4),
   },
 });

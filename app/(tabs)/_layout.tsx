@@ -11,6 +11,7 @@ export const TABS_CONFIG: readonly TabConfigItem[] = [
 export default function TabLayout() {
   return (
     <Tabs
+      backBehavior="none"
       sceneContainerStyle={{ backgroundColor: "black" }}
       screenOptions={{ animation: "none" }}
       tabBar={(props) => {

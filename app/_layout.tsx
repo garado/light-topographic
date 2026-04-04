@@ -6,6 +6,7 @@ import {
   useInvertColors,
 } from "@/contexts/InvertColorsContext";
 import { MapLayersProvider } from "@/contexts/MapLayersContext";
+import { LayerPresetsProvider } from "@/contexts/LayerPresetsContext";
 import { MapStyleProvider } from "@/contexts/MapStyleContext";
 import { OptionExampleProvider } from "@/contexts/OptionExampleContext";
 import { RoutesProvider } from "@/contexts/RoutesContext";
@@ -31,6 +32,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <InvertColorsProvider>
         <MapLayersProvider>
+        <LayerPresetsProvider>
         <RoutesProvider>
         <MapStyleProvider>
         <OptionExampleProvider>
@@ -39,6 +41,7 @@ export default function App() {
         </OptionExampleProvider>
         </MapStyleProvider>
         </RoutesProvider>
+        </LayerPresetsProvider>
         </MapLayersProvider>
       </InvertColorsProvider>
     </GestureHandlerRootView>

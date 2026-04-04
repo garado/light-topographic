@@ -12,6 +12,7 @@ interface RightAction {
   icon: keyof typeof MaterialIcons.glyphMap;
   onPress: () => void;
   show?: boolean;
+  active?: boolean;
 }
 
 interface ContentContainerProps {
@@ -21,6 +22,7 @@ interface ContentContainerProps {
   headerTitle?: string;
   hideBackButton?: boolean;
   rightAction?: RightAction;
+  rightActions?: RightAction[];
 }
 
 export default function ContentContainer({
@@ -28,6 +30,7 @@ export default function ContentContainer({
   children,
   hideBackButton = false,
   rightAction,
+  rightActions,
   contentWidth = "normal",
   contentGap = 47,
 }: ContentContainerProps) {
@@ -51,20 +54,21 @@ export default function ContentContainer({
   };
 
   return (
-    <SwipeBackContainer enabled={canSwipeBack} onSwipeBack={handleBack}>
-      <View
-        style={[
-          styles.container,
-          { backgroundColor: invertColors ? "white" : "black" },
-        ]}
-      >
-        {headerTitle && (
-          <Header
-            headerTitle={headerTitle}
-            hideBackButton={hideBackButton}
-            rightAction={rightAction}
-          />
-        )}
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: invertColors ? "white" : "black" },
+      ]}
+    >
+      {headerTitle && (
+        <Header
+          headerTitle={headerTitle}
+          hideBackButton={hideBackButton}
+          rightAction={rightAction}
+          rightActions={rightActions}
+        />
+      )}
+      <SwipeBackContainer enabled={canSwipeBack} onSwipeBack={handleBack}>
         <View
           style={[
             styles.scrollWrapper,
@@ -125,8 +129,8 @@ export default function ContentContainer({
             </View>
           )}
         </View>
-      </View>
-    </SwipeBackContainer>
+      </SwipeBackContainer>
+    </View>
   );
 }
 

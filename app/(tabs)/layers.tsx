@@ -1,64 +1,79 @@
+import { useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import ContentContainer from "@/components/ContentContainer";
-import { StyledText } from "@/components/StyledText";
-import { ToggleSwitch } from "@/components/ToggleSwitch";
-import { useMapLayers, type LayerSettings, type MapLayers } from "@/contexts/MapLayersContext";
+import { HapticPressable } from "@/components/HapticPressable";
+import { StyledButton } from "@/components/StyledButton";
+import { useInvertColors } from "@/contexts/InvertColorsContext";
+import { useLayerPresets, type LayerPreset } from "@/contexts/LayerPresetsContext";
 import { n } from "@/utils/scaling";
 
-const LAYER_LABELS: Record<keyof MapLayers, string> = {
-  contours: "Contours",
-  trails: "Trails",
-  roads: "Roads",
-  water: "Water",
-  labels: "Labels",
-  route: "Route",
-};
-
-function LayerRow({
-  name,
-  settings,
-  layerKey,
+function PresetRow({
+  preset,
+  editMode,
+  active,
+  onPress,
+  onDelete,
 }: {
-  name: string;
-  settings: LayerSettings;
-  layerKey: keyof MapLayers;
+  preset: LayerPreset;
+  editMode: boolean;
+  active: boolean;
+  onPress: () => void;
+  onDelete: () => void;
 }) {
-  const { setLayer } = useMapLayers();
+  const { invertColors } = useInvertColors();
 
   return (
-    <View style={styles.layerRow}>
-      <StyledText style={styles.layerHeader}>{name}</StyledText>
-      <View style={styles.togglesRow}>
-        <View style={styles.toggleHalf}>
-          <ToggleSwitch
-            label="Visible"
-            value={settings.visible}
-            onValueChange={(v) => setLayer(layerKey, "visible", v)}
-          />
-        </View>
-        <View style={styles.toggleHalf}>
-          <ToggleSwitch
-            label="Color"
-            value={settings.color}
-            onValueChange={(v) => setLayer(layerKey, "color", v)}
-          />
-        </View>
+    <View style={styles.row}>
+      <View style={styles.rowContent}>
+        <StyledButton text={preset.name} selected={active} onPress={onPress} />
       </View>
+      {editMode && (
+        <HapticPressable onPress={onDelete} style={styles.deleteBtn}>
+          <MaterialIcons
+            name="close"
+            size={n(20)}
+            color={invertColors ? "black" : "white"}
+            style={{ opacity: 0.4 }}
+          />
+        </HapticPressable>
+      )}
     </View>
   );
 }
 
 export default function LayersScreen() {
-  const { layers } = useMapLayers();
+  const { presets, activePresetId, applyPreset, deletePreset } = useLayerPresets();
+  const [editMode, setEditMode] = useState(false);
 
   return (
-    <ContentContainer headerTitle="Layers" hideBackButton>
-      {(Object.keys(LAYER_LABELS) as (keyof MapLayers)[]).map((key) => (
-        <LayerRow
-          key={key}
-          layerKey={key}
-          name={LAYER_LABELS[key]}
-          settings={layers[key]}
+    <ContentContainer
+      headerTitle="Layers"
+      hideBackButton
+      rightActions={[
+        {
+          icon: "edit",
+          onPress: () => setEditMode((v) => !v),
+          active: editMode,
+        },
+        {
+          icon: "add",
+          onPress: () => router.push("/layers/edit-preset?presetId=new"),
+        },
+      ]}
+    >
+      {presets.map((preset) => (
+        <PresetRow
+          key={preset.id}
+          preset={preset}
+          editMode={editMode}
+          active={preset.id === activePresetId}
+          onPress={() => editMode
+            ? router.push(`/layers/edit-preset?presetId=${preset.id}`)
+            : applyPreset(preset.id)
+          }
+          onDelete={() => deletePreset(preset.id)}
         />
       ))}
     </ContentContainer>
@@ -66,18 +81,15 @@ export default function LayersScreen() {
 }
 
 const styles = StyleSheet.create({
-  layerRow: {
-    width: "100%",
-  },
-  layerHeader: {
-    fontSize: n(22),
-    marginBottom: n(-12),
-  },
-  togglesRow: {
+  row: {
     flexDirection: "row",
+    alignItems: "center",
     width: "100%",
   },
-  toggleHalf: {
+  rowContent: {
     flex: 1,
+  },
+  deleteBtn: {
+    padding: n(4),
   },
 });
