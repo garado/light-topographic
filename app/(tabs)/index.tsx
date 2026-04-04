@@ -10,6 +10,7 @@ import { buildMapStyle } from "@/utils/mapStyle";
 import { useMapLayers } from "@/contexts/MapLayersContext";
 import { useRoutes } from "@/contexts/RoutesContext";
 MapLibreGL.setAccessToken("pk.placeholder");
+MapLibreGL.offlineManager.setTileCountLimit(5000);
 
 const DOT_SIZE = 12;
 const CONE_HEIGHT = DOT_SIZE * 1.5;
