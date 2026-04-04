@@ -1,4 +1,4 @@
-export function buildMapStyle(apiKey: string) {
+export function buildMapStyle(apiKey: string, maptilerKey: string) {
   return JSON.stringify({
     version: 8,
     sources: {
@@ -8,6 +8,12 @@ export function buildMapStyle(apiKey: string) {
         minzoom: 0,
         maxzoom: 15,
         attribution: "Protomaps © OpenStreetMap",
+      },
+      contours: {
+        type: "vector",
+        tiles: [`https://api.maptiler.com/tiles/contours/{z}/{x}/{y}.pbf?key=${maptilerKey}`],
+        minzoom: 9,
+        maxzoom: 14,
       },
     },
     layers: [
@@ -46,6 +52,14 @@ export function buildMapStyle(apiKey: string) {
         source: "protomaps",
         "source-layer": "waterway",
         paint: { "line-color": "#3a3a3a", "line-width": 1 },
+      },
+      // Contour lines
+      {
+        id: "contour",
+        type: "line",
+        source: "contours",
+        "source-layer": "contour",
+        paint: { "line-color": "#888888", "line-width": 1, "line-opacity": 0.9 },
       },
       // Roads — minor
       {

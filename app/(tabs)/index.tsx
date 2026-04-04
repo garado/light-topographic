@@ -9,11 +9,11 @@ import { HapticPressable } from "@/components/HapticPressable";
 import { n } from "@/utils/scaling";
 import { parseGpx, type GpxRoute } from "@/utils/parseGpx";
 import { buildMapStyle } from "@/utils/mapStyle";
-import { PROTOMAPS_API_KEY } from "@/constants";
+import { PROTOMAPS_API_KEY, MAPTILER_API_KEY } from "@/constants";
 
 MapLibreGL.setAccessToken("pk.placeholder");
 
-const MAP_STYLE = buildMapStyle(PROTOMAPS_API_KEY);
+const MAP_STYLE = buildMapStyle(PROTOMAPS_API_KEY, MAPTILER_API_KEY);
 
 const DOT_SIZE = 20;
 const DOT_INNER_SIZE = 10;
