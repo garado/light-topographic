@@ -65,6 +65,16 @@ export default function MapScreen() {
     );
   }, [activeRoute]);
 
+  const zoomToRoute = useCallback(() => {
+    if (!activeRoute || !cameraRef.current) return;
+    cameraRef.current.fitBounds(
+      [activeRoute.bounds[2], activeRoute.bounds[3]],
+      [activeRoute.bounds[0], activeRoute.bounds[1]],
+      50,
+      600,
+    );
+  }, [activeRoute]);
+
   const resetNorth = useCallback(() => {
     cameraRef.current?.setCamera({ heading: 0, animationDuration: 400 });
     setBearing(0);
@@ -118,6 +128,11 @@ export default function MapScreen() {
       )}
 
       <View style={styles.buttonRow}>
+        {activeRoute && (
+          <HapticPressable onPress={zoomToRoute}>
+            <MaterialIcons name="route" size={n(48)} color="white" />
+          </HapticPressable>
+        )}
         <HapticPressable onPress={resetNorth}>
           <MaterialIcons
             name="explore"
