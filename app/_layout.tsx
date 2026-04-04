@@ -5,6 +5,7 @@ import {
   InvertColorsProvider,
   useInvertColors,
 } from "@/contexts/InvertColorsContext";
+import { MapLayersProvider } from "@/contexts/MapLayersContext";
 import { MapStyleProvider } from "@/contexts/MapStyleContext";
 import { OptionExampleProvider } from "@/contexts/OptionExampleContext";
 
@@ -28,12 +29,14 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <InvertColorsProvider>
+        <MapLayersProvider>
         <MapStyleProvider>
         <OptionExampleProvider>
           <StatusBar hidden />
           <RootLayout />
         </OptionExampleProvider>
         </MapStyleProvider>
+        </MapLayersProvider>
       </InvertColorsProvider>
     </GestureHandlerRootView>
   );

@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     paddingTop: n(9),
   },
   switchTouchable: {
-    marginTop: n(13),
+    marginTop: n(5),
     marginRight: n(20),
     marginLeft: n(8.5),
   },

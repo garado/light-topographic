@@ -2,21 +2,23 @@ import MapLibreGL from "@maplibre/maplibre-react-native";
 import Geolocation from "@react-native-community/geolocation";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
 import { n } from "@/utils/scaling";
 import { parseGpx, type GpxRoute } from "@/utils/parseGpx";
 import { buildMapStyle } from "@/utils/mapStyle";
+import { useMapLayers } from "@/contexts/MapLayersContext";
 MapLibreGL.setAccessToken("pk.placeholder");
-
-const MAP_STYLE = buildMapStyle();
 
 const DOT_SIZE = 20;
 const DOT_INNER_SIZE = 10;
 
 export default function MapScreen() {
+  const { layers } = useMapLayers();
+  const MAP_STYLE = useMemo(() => buildMapStyle(layers), [layers]);
+
   const mapRef = useRef<MapLibreGL.MapView>(null);
   const cameraRef = useRef<MapLibreGL.Camera>(null);
   const [coords, setCoords] = useState<[number, number] | null>(null);

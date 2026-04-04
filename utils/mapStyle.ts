@@ -1,4 +1,19 @@
-export function buildMapStyle() {
+import type { MapLayers } from "@/contexts/MapLayersContext";
+
+export function buildMapStyle(layers: MapLayers) {
+  const vis = (key: keyof MapLayers) =>
+    ({ visibility: layers[key].visible ? "visible" : "none" } as const);
+
+  const contourColor = layers.contours.color ? "#c87941" : "#555555";
+  const contourIndexColor = layers.contours.color ? "#a05020" : "#888888";
+  const trailColor = layers.trails.color ? "#a3be8c" : "#888888";
+  const trailLabelColor = layers.trails.color ? "#a3be8c" : "#aaaaaa";
+  const waterFillColor = layers.water.color ? "#5e81ac" : "#1a1a2e";
+  const waterwayColor = layers.water.color ? "#5e81ac" : "#303030";
+  const roadMinorColor = layers.roads.color ? "#282828" : "#282828";
+  const roadMediumColor = layers.roads.color ? "#333333" : "#333333";
+  const roadMajorColor = layers.roads.color ? "#444444" : "#444444";
+
   return JSON.stringify({
     version: 8,
     glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
@@ -56,23 +71,38 @@ export function buildMapStyle() {
         type: "fill",
         source: "osm",
         "source-layer": "water",
-        paint: { "fill-color": "#252525" },
+        layout: vis("water"),
+        paint: { "fill-color": waterFillColor },
       },
       {
         id: "waterway",
         type: "line",
         source: "osm",
         "source-layer": "waterway",
-        paint: { "line-color": "#303030", "line-width": 1 },
+        layout: vis("water"),
+        paint: { "line-color": waterwayColor, "line-width": 1 },
       },
 
-      // Contours
+      // Contours — regular
       {
         id: "contour",
         type: "line",
         source: "contours",
         "source-layer": "contours",
-        paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 1 },
+        layout: vis("contours"),
+        filter: ["!", ["get", "idx"]],
+        paint: { "line-color": contourColor, "line-width": 0.5, "line-opacity": 0.9 },
+      },
+
+      // Contours — index (every 5th)
+      {
+        id: "contour-index",
+        type: "line",
+        source: "contours",
+        "source-layer": "contours",
+        layout: vis("contours"),
+        filter: ["get", "idx"],
+        paint: { "line-color": contourIndexColor, "line-width": 1, "line-opacity": 1 },
       },
 
       // Roads
@@ -81,24 +111,27 @@ export function buildMapStyle() {
         type: "line",
         source: "osm",
         "source-layer": "transportation",
+        layout: vis("roads"),
         filter: ["in", "class", "minor", "service", "track"],
-        paint: { "line-color": "#282828", "line-width": 1 },
+        paint: { "line-color": roadMinorColor, "line-width": 1 },
       },
       {
         id: "roads-medium",
         type: "line",
         source: "osm",
         "source-layer": "transportation",
+        layout: vis("roads"),
         filter: ["in", "class", "tertiary", "secondary"],
-        paint: { "line-color": "#333333", "line-width": 1.5 },
+        paint: { "line-color": roadMediumColor, "line-width": 1.5 },
       },
       {
         id: "roads-major",
         type: "line",
         source: "osm",
         "source-layer": "transportation",
+        layout: vis("roads"),
         filter: ["in", "class", "primary", "trunk", "motorway"],
-        paint: { "line-color": "#444444", "line-width": 2.5 },
+        paint: { "line-color": roadMajorColor, "line-width": 2.5 },
       },
 
       // Trails — from dedicated trail source
@@ -107,8 +140,9 @@ export function buildMapStyle() {
         type: "line",
         source: "trails",
         "source-layer": "trail",
+        layout: { ...vis("trails"), "line-cap": "round" },
         paint: {
-          "line-color": "#888888",
+          "line-color": trailColor,
           "line-width": 1,
           "line-dasharray": [3, 2],
         },
@@ -121,6 +155,7 @@ export function buildMapStyle() {
         source: "trails",
         "source-layer": "trail",
         layout: {
+          ...vis("trails"),
           "text-field": ["get", "name"],
           "text-font": ["Noto Sans Regular"],
           "text-size": 10,
@@ -128,7 +163,7 @@ export function buildMapStyle() {
           "text-max-angle": 30,
         },
         paint: {
-          "text-color": "#aaaaaa",
+          "text-color": trailLabelColor,
           "text-halo-color": "#000000",
           "text-halo-width": 1.5,
         },
@@ -141,6 +176,7 @@ export function buildMapStyle() {
         source: "osm",
         "source-layer": "place",
         layout: {
+          ...vis("labels"),
           "text-field": ["get", "name"],
           "text-font": ["Noto Sans Regular"],
           "text-size": ["interpolate", ["linear"], ["zoom"], 6, 10, 14, 14],
@@ -160,6 +196,7 @@ export function buildMapStyle() {
         source: "osm",
         "source-layer": "mountain_peak",
         layout: {
+          ...vis("labels"),
           "text-field": ["concat", ["get", "name"], "\n", ["get", "ele"], "m"],
           "text-font": ["Noto Sans Regular"],
           "text-size": 11,
