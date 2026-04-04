@@ -6,23 +6,19 @@ import { n } from "@/utils/scaling";
 const FAQS = [
   {
     q: "The direction cone is inaccurate",
-    a: "The cone uses your phone's magnetometer (compass). Nearby metal objects - metal credit cards, keys - can interfere with it and cause incorrect readings. Remove metal objects from near your phone.",
+    a: "The cone uses your phone's magnetometer (compass). Nearby metal objects - metal credit cards, keys, metal screws - can interfere with it and cause incorrect readings. Remove metal objects from near your phone.",
   },
   {
     q: "Location does not appear",
     a: "Make sure location permissions are granted for Topographic. GPS can also take a moment to get a fix, especially indoors or under heavy tree cover.",
   },
   {
-    q: "Contour lines are not showing",
-    a: "Contour lines only load at zoom level 8 and above. Zoom in closer to your area and they should appear. Check the Layers tab to make sure contours are set to visible.",
-  },
-  {
-    q: "Trail names are not showing",
-    a: "Trail names appear at higher zoom levels. Zoom in further and they should show up. You can also check the Layers tab to confirm trails are enabled.",
+    q: "Contour lines or trail names are not showing",
+    a: "These only appear at higher zoom levels. Zoom in closer to your area and they should appear. Check the Layers tab to make sure these layers are set to visible.",
   },
   {
     q: "Colors are not working",
-    a: "Your phone may be in grayscale mode. Change it in the Android layer accessibility settings. You can also enter the Album app in LightOS to disable grayscale, then immediately use your keypress shortcut to switch to the Android layer.",
+    a: "Your phone may be in grayscale mode. Change it in the Android layer accessibility settings. You can also enter the Album app in LightOS to disable grayscale, then use your keypress shortcut to switch to the Android layer.",
   }
 ];
 
