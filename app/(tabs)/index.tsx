@@ -194,11 +194,6 @@ export default function MapScreen() {
       )}
 
       <View style={styles.buttonRow}>
-        {activeRoute && (
-          <HapticPressable onPress={zoomToRoute}>
-            <MaterialIcons name="route" size={n(48)} color="white" />
-          </HapticPressable>
-        )}
         <HapticPressable onPress={resetNorth}>
           <MaterialIcons
             name="explore"
@@ -207,6 +202,11 @@ export default function MapScreen() {
             style={{ transform: [{ rotate: `${-bearing - 45}deg` }] }}
           />
         </HapticPressable>
+        {activeRoute && (
+          <HapticPressable onPress={zoomToRoute}>
+            <MaterialIcons name="route" size={n(48)} color="white" />
+          </HapticPressable>
+        )}
         <HapticPressable onPress={jumpToLocation}>
           <MaterialIcons name="my-location" size={n(48)} color="white" />
         </HapticPressable>

@@ -12,11 +12,11 @@ export function buildMapStyle(layers: MapLayers, offlineOnly = false) {
   const contourIndexColor = layers.contours.color ? "#a05020" : "#ffffff";
   const trailColor = layers.trails.color ? "#a3be8c" : "#888888";
   const trailLabelColor = layers.trails.color ? "#a3be8c" : "#aaaaaa";
-  const waterFillColor = layers.water.color ? "#5e81ac" : "#282828";
-  const waterwayColor = layers.water.color ? "#5e81ac" : "#303030";
-  const roadMinorColor = layers.roads.color ? "#282828" : "#282828";
-  const roadMediumColor = layers.roads.color ? "#333333" : "#333333";
-  const roadMajorColor = layers.roads.color ? "#444444" : "#444444";
+  const waterFillColor = layers.water.color ? "#5e81ac" : "#262626";
+  const waterwayColor = layers.water.color ? "#5e81ac" : "#2d2d2d";
+  const roadMinorColor = layers.roads.color ? "#262626" : "#262626";
+  const roadMediumColor = layers.roads.color ? "#313131" : "#313131";
+  const roadMajorColor = layers.roads.color ? "#424242" : "#424242";
 
   return JSON.stringify({
     version: 8,
