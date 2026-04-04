@@ -4,11 +4,11 @@ export function buildMapStyle(layers: MapLayers) {
   const vis = (key: keyof MapLayers) =>
     ({ visibility: layers[key].visible ? "visible" : "none" } as const);
 
-  const contourColor = layers.contours.color ? "#c87941" : "#555555";
-  const contourIndexColor = layers.contours.color ? "#a05020" : "#888888";
+  const contourColor = layers.contours.color ? "#c87941" : "#ffffff";
+  const contourIndexColor = layers.contours.color ? "#a05020" : "#ffffff";
   const trailColor = layers.trails.color ? "#a3be8c" : "#888888";
   const trailLabelColor = layers.trails.color ? "#a3be8c" : "#aaaaaa";
-  const waterFillColor = layers.water.color ? "#5e81ac" : "#1a1a2e";
+  const waterFillColor = layers.water.color ? "#5e81ac" : "#282828";
   const waterwayColor = layers.water.color ? "#5e81ac" : "#303030";
   const roadMinorColor = layers.roads.color ? "#282828" : "#282828";
   const roadMediumColor = layers.roads.color ? "#333333" : "#333333";
@@ -103,6 +103,29 @@ export function buildMapStyle(layers: MapLayers) {
         layout: vis("contours"),
         filter: ["get", "idx"],
         paint: { "line-color": contourIndexColor, "line-width": 1, "line-opacity": 1 },
+      },
+
+      // Contour elevation labels (index lines only)
+      {
+        id: "contour-labels",
+        type: "symbol",
+        source: "contours",
+        "source-layer": "contours",
+        filter: ["get", "idx"],
+        layout: {
+          ...vis("contours"),
+          "symbol-placement": "line",
+          "text-field": ["to-string", ["get", "ele"]],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 9,
+          "symbol-spacing": 250,
+          "text-max-angle": 30,
+        },
+        paint: {
+          "text-color": contourIndexColor,
+          "text-halo-color": "#0d0d0d",
+          "text-halo-width": 1.5,
+        },
       },
 
       // Roads

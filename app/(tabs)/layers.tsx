@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   },
   layerHeader: {
     fontSize: n(22),
-    marginBottom: n(-10),
+    marginBottom: n(-12),
   },
   togglesRow: {
     flexDirection: "row",

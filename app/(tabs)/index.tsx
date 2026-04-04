@@ -45,12 +45,12 @@ export default function MapScreen() {
   }, [fetchLocation]);
 
   const updateDotPosition = useCallback(async (feature?: { properties?: { heading?: number } }) => {
-    if (!mapRef.current || !coords) return;
-    const point = await mapRef.current.getPointInView(coords);
-    setDotScreenPos({ x: point[0], y: point[1] });
     if (feature?.properties?.heading !== undefined) {
       setBearing(feature.properties.heading);
     }
+    if (!mapRef.current || !coords) return;
+    const point = await mapRef.current.getPointInView(coords);
+    setDotScreenPos({ x: point[0], y: point[1] });
   }, [coords]);
 
   useEffect(() => {
@@ -59,6 +59,7 @@ export default function MapScreen() {
 
   const resetNorth = useCallback(() => {
     cameraRef.current?.setCamera({ heading: 0, animationDuration: 400 });
+    setBearing(0);
   }, []);
 
   const jumpToLocation = useCallback(() => {
@@ -94,6 +95,7 @@ export default function MapScreen() {
         mapStyle={MAP_STYLE}
         logoEnabled={false}
         attributionEnabled={false}
+        compassEnabled={false}
         onRegionIsChanging={updateDotPosition}
         onRegionDidChange={updateDotPosition}
       >
@@ -136,7 +138,7 @@ export default function MapScreen() {
             name="explore"
             size={n(48)}
             color="white"
-            style={{ transform: [{ rotate: `${-bearing}deg` }] }}
+            style={{ transform: [{ rotate: `${-bearing - 45}deg` }] }}
           />
         </HapticPressable>
         <HapticPressable onPress={jumpToLocation}>
