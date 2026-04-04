@@ -9,8 +9,20 @@
 - Display current GPS location with directional indicator
 - Load GPX routes for navigation
 
+### Layers with adjustable toggle/color
+    
+<p align="center">
+    <img src="./assets/images/layer-control.png">
+</p>
+
 <p align="center">
     <img src="assets/images/layers.gif" alt="Layers with adjustable toggle/color.">
+</p>
+
+### Named trails and labeled elevations
+
+<p align="center">
+    <img src="./assets/images/elevation-trail-labels.png">
 </p>
 
 ## Known issues
