@@ -19,11 +19,13 @@
     <img src="assets/images/layers.gif" alt="Layers with adjustable toggle/color.">
 </p>
 
-### Map rotation
+### Map utilities
 
-TODO
+Tap the Compass icon to reorient North. Tap again to have the map rotate to follow your direction.
 
-### GPX route support
+Tap the Target icon to zoom to your current location. Tap again to have the map lock onto your location and follow you as you move.
+
+### GPX routing support
 
 <p align="center">
     <img src="./assets/images/route-selection.png" height=300>
