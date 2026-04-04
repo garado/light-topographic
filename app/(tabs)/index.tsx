@@ -118,13 +118,15 @@ export default function MapScreen() {
 
   const zoomToRoute = useCallback(() => {
     if (!activeRoute || !cameraRef.current) return;
-    cameraRef.current.fitBounds(
+    setLocateMode(LocateMode.Free);
+    if (compassModeRef.current === CompassMode.Heading) setCompassMode(CompassMode.Free);
+    moveCamera(() => cameraRef.current!.fitBounds(
       [activeRoute.bounds[2], activeRoute.bounds[3]],
       [activeRoute.bounds[0], activeRoute.bounds[1]],
       50,
       600,
-    );
-  }, [activeRoute]);
+    ), 600);
+  }, [activeRoute, setLocateMode, setCompassMode, moveCamera]);
 
   const suppressResetRef = useRef(false);
 
