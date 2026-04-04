@@ -190,7 +190,9 @@ export default function MapScreen() {
   const onRegionChanging = useCallback((feature?: { properties?: { isUserInteraction?: boolean; heading?: number } }) => {
     if (feature?.properties?.isUserInteraction && !suppressResetRef.current) {
       if (locateModeRef.current > LocateMode.Free) setLocateMode(LocateMode.Free);
-      if (compassModeRef.current === CompassMode.Heading) setCompassMode(CompassMode.Free);
+      if (compassModeRef.current === CompassMode.North || compassModeRef.current === CompassMode.Heading) {
+        setCompassMode(CompassMode.Free);
+      }
     }
     updateDotPosition(feature);
   }, [updateDotPosition, setLocateMode, setCompassMode]);
@@ -216,7 +218,7 @@ export default function MapScreen() {
         logoEnabled={false}
         attributionEnabled={false}
         compassEnabled={false}
-        rotateEnabled={compassMode === CompassMode.Free}
+        rotateEnabled={compassMode !== CompassMode.Heading}
         onRegionIsChanging={onRegionChanging}
         onRegionDidChange={updateDotPosition}
       >
