@@ -66,23 +66,13 @@ export function buildMapStyle() {
         paint: { "line-color": "#303030", "line-width": 1 },
       },
 
-      // Contours — regular
+      // Contours
       {
         id: "contour",
         type: "line",
         source: "contours",
-        "source-layer": "contour",
-        filter: ["==", "idx", false],
-        paint: { "line-color": "#2e2e2e", "line-width": 0.5, "line-opacity": 0.9 },
-      },
-      // Contours — index (every 5th)
-      {
-        id: "contour-index",
-        type: "line",
-        source: "contours",
-        "source-layer": "contour",
-        filter: ["==", "idx", true],
-        paint: { "line-color": "#505050", "line-width": 1, "line-opacity": 1 },
+        "source-layer": "contours",
+        paint: { "line-color": "#ffffff", "line-width": 2, "line-opacity": 1 },
       },
 
       // Roads
