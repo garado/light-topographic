@@ -8,7 +8,7 @@ import { SelectorButton } from "@/components/SelectorButton";
 import { StyledText } from "@/components/StyledText";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useLayerPresets } from "@/contexts/LayerPresetsContext";
-import { type LayerSettings, type MapLayers } from "@/contexts/MapLayersContext";
+import { useMapLayers, type LayerSettings, type MapLayers } from "@/contexts/MapLayersContext";
 import { n } from "@/utils/scaling";
 
 const LAYER_LABELS: Record<keyof MapLayers, string> = {
@@ -63,7 +63,8 @@ function LayerRow({
 
 export default function EditPresetScreen() {
   const { presetId } = useLocalSearchParams<{ presetId: string }>();
-  const { presets, savePreset } = useLayerPresets();
+  const { presets, savePreset, activePresetId } = useLayerPresets();
+  const { setAllLayers } = useMapLayers();
 
   const existing = presetId !== "new" ? presets.find((p) => p.id === presetId) : null;
 
@@ -85,11 +86,9 @@ export default function EditPresetScreen() {
 
   const handleSave = () => {
     if (!name.trim()) return;
-    savePreset({
-      id: existing?.id ?? Date.now().toString(),
-      name: name.trim(),
-      layers,
-    });
+    const id = existing?.id ?? Date.now().toString();
+    savePreset({ id, name: name.trim(), layers });
+    if (activePresetId === id) setAllLayers(layers);
     router.back();
   };
 
