@@ -1,4 +1,5 @@
-import { type Href, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import { confirmState } from "@/utils/confirmState";
 import { StyleSheet, View } from "react-native";
 import { HapticPressable } from "@/components/HapticPressable";
 import { Header } from "@/components/Header";
@@ -18,8 +19,8 @@ export default function ConfirmScreen() {
   }>();
 
   const handleConfirm = () => {
-    const path = params.returnPath || "/(tabs)/settings";
-    router.navigate(`${path}?confirmed=true&action=${encodeURIComponent(params.action ?? '')}` as Href);
+    confirmState.pendingAction = params.action ?? null;
+    router.back();
   };
 
   const handleBack = () => {
