@@ -168,6 +168,6 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
   deleteBtn: {
-    padding: n(4),
+    paddingTop: n(8)
   },
 });

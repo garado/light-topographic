@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   deleteBtn: {
-    padding: n(4),
+    paddingTop: n(8)
   },
   presetList: {
     gap: n(26)
