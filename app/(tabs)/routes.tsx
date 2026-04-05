@@ -3,13 +3,14 @@ import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import ContentContainer from "@/components/ContentContainer";
 import { Header } from "@/components/Header";
 import { HapticPressable } from "@/components/HapticPressable";
 import { StyledText } from "@/components/StyledText";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useRoutes, type StoredRoute } from "@/contexts/RoutesContext";
+import { confirmState } from "@/utils/confirmState";
 import { parseGpx } from "@/utils/parseGpx";
 import { n } from "@/utils/scaling";
 
@@ -48,16 +49,15 @@ function RouteRow({
 export default function RoutesScreen() {
   const { routes, activeRouteId, addRoute, removeRoute, setActiveRouteId } = useRoutes();
   const { invertColors } = useInvertColors();
-  const params = useLocalSearchParams<{ confirmed?: string; action?: string }>();
 
   useFocusEffect(
     useCallback(() => {
-      if (params.confirmed === "true" && params.action?.startsWith("deleteRoute:")) {
-        const id = params.action.slice("deleteRoute:".length);
-        router.setParams({ confirmed: undefined, action: undefined });
+      if (confirmState.pendingAction?.startsWith("deleteRoute:")) {
+        const id = confirmState.pendingAction.slice("deleteRoute:".length);
+        confirmState.pendingAction = null;
         removeRoute(id);
       }
-    }, [params.confirmed, params.action, removeRoute]),
+    }, [removeRoute]),
   );
 
   const loadGpx = useCallback(async () => {
