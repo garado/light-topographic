@@ -17,9 +17,9 @@
 
 ### Map utilities
 
-Tap the Compass icon to reorient North. Tap again to have the map rotate to follow your direction.
+Tap the Compass icon to switch to different map alignment modes: manual, north-up, or heading tracking (rotates the map to match your orientation).
 
-Tap the Target icon to zoom to your current location. Tap again to have the map lock onto your location and follow you as you move.
+Tap the Target icon to center the map on your current coordinates and toggle auto-center mode.
 
 ### GPX routing support
 
