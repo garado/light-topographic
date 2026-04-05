@@ -5,9 +5,11 @@ import ContentContainer from "@/components/ContentContainer";
 import { SelectorButton } from "@/components/SelectorButton";
 import { StyledButton } from "@/components/StyledButton";
 import { n } from "@/utils/scaling";
+import * as Application from "expo-application";
 
 export default function SettingsScreen() {
   const [locationPermission, setLocationPermission] = useState<string>("unknown");
+  const version = Application.nativeApplicationVersion;
 
   useEffect(() => {
     const checkPermission = async () => {
@@ -38,7 +40,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ContentContainer headerTitle="Settings" hideBackButton>
+    <ContentContainer headerTitle={`Settings (v${version})`} hideBackButton>
       <View style={styles.settings}>
         <SelectorButton
           label="Location Permission"
