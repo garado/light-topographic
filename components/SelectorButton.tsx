@@ -5,14 +5,16 @@ import { HapticPressable } from "./HapticPressable";
 import { StyledText } from "./StyledText";
 
 interface SelectorButtonProps {
-  href: Href;
   label: string;
   value: string;
+  href?: Href;
+  onPress?: () => void;
 }
 
-export function SelectorButton({ label, value, href }: SelectorButtonProps) {
+export function SelectorButton({ label, value, href, onPress }: SelectorButtonProps) {
+  const handlePress = onPress ?? (() => router.push(href!));
   return (
-    <HapticPressable onPress={() => router.push(href)} style={styles.button}>
+    <HapticPressable onPress={handlePress} style={styles.button}>
       <StyledText numberOfLines={1} style={styles.label}>
         {label}
       </StyledText>
@@ -32,6 +34,5 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: n(30),
-    paddingBottom: n(10),
   },
 });
