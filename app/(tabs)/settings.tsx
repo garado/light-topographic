@@ -3,8 +3,10 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View, Linking, PermissionsAndroid } from "react-native";
 import ContentContainer from "@/components/ContentContainer";
+import { HapticPressable } from "@/components/HapticPressable";
 import { SelectorButton } from "@/components/SelectorButton";
 import { StyledButton } from "@/components/StyledButton";
+import { StyledText } from "@/components/StyledText";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useLayerPresets } from "@/contexts/LayerPresetsContext";
@@ -80,6 +82,7 @@ export default function SettingsScreen() {
           text="Reset Presets"
         />
         <StyledButton onPress={() => router.push("/settings/faq")} text="FAQ" />
+        <StyledButton onPress={() => router.push("/settings/attribution")} text="Attribution" />
       </View>
     </ContentContainer>
   );
@@ -88,6 +91,10 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   settings: {
     gap: n(26)
+  },
+  attributionLink: {
+    fontSize: n(18),
+    opacity: 0.4,
   },
   invert: {
     width: n(300),
