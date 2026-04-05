@@ -19,7 +19,6 @@ export default function CachedTilesScreen() {
   const snapshot = useRef<MapLayers | null>(null);
   const MAP_STYLE = useMemo(() => buildMapStyle(layers), [layers]);
   const [coords, setCoords] = useState<[number, number] | null>(null);
-
   useFocusEffect(
     useCallback(() => {
       snapshot.current = layers;

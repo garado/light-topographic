@@ -6,6 +6,7 @@ import { n } from "@/utils/scaling";
 
 interface TextInputProps {
   autoFocus?: boolean;
+  keyboardType?: "default" | "numeric";
   onChangeText: (text: string) => void;
   onSubmit?: () => void;
   placeholder: string;
@@ -18,6 +19,7 @@ export function TextInput({
   placeholder,
   onSubmit,
   autoFocus = false,
+  keyboardType = "default",
 }: TextInputProps) {
   const { invertColors } = useInvertColors();
 
@@ -36,6 +38,7 @@ export function TextInput({
         autoCorrect={false}
         autoFocus={autoFocus}
         cursorColor={textColor}
+        keyboardType={keyboardType}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmit}
         placeholder={placeholder}

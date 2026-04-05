@@ -1,3 +1,4 @@
+import * as Application from "expo-application";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, View, Linking, PermissionsAndroid } from "react-native";
@@ -5,7 +6,6 @@ import ContentContainer from "@/components/ContentContainer";
 import { SelectorButton } from "@/components/SelectorButton";
 import { StyledButton } from "@/components/StyledButton";
 import { n } from "@/utils/scaling";
-import * as Application from "expo-application";
 
 const ENABLE_TEXT = "Enabled";
 const DISABLE_TEXT = "Disabled";
@@ -51,7 +51,7 @@ export default function SettingsScreen() {
           onPress={handleLocationPermission}
         />
         <StyledButton onPress={() => router.push("/settings/customise")} text="Customise" />
-        <StyledButton onPress={() => router.push("/settings/cached-tiles")} text="Cached Tiles" />
+        <StyledButton onPress={() => router.push("/settings/map-tile-cache")} text="Map Tile Cache" />
         <StyledButton onPress={() => router.push("/settings/faq")} text="FAQ" />
       </View>
     </ContentContainer>
