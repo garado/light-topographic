@@ -56,7 +56,7 @@ export function Header({
           </View>
         </HapticPressable>
       )}
-      <View pointerEvents="none" style={styles.title}>
+      <View pointerEvents="none" style={styles.titleContainer}>
         <StyledText numberOfLines={1} style={styles.title} pointerEvents="none">
           {headerTitle}
         </StyledText>
@@ -92,10 +92,12 @@ const styles = StyleSheet.create({
     paddingVertical: n(5),
     zIndex: 1,
   },
-  title: {
+  titleContainer: {
     position: "absolute",
     left: 0,
     right: 0,
+  },
+  title: {
     textAlign: "center",
     fontSize: n(20),
     fontFamily: "PublicSans-Regular",
