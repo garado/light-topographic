@@ -114,15 +114,17 @@ export default function RoutesScreen() {
       hideBackButton
       rightAction={{ icon: "add", onPress: loadGpx }}
     >
-      {routes.map((route) => (
-        <RouteRow
-          key={route.id}
-          route={route}
-          isActive={route.id === activeRouteId}
-          onPress={() => setActiveRouteId(route.id === activeRouteId ? null : route.id)}
-          onDelete={() => confirmDelete(route)}
-        />
-      ))}
+      <View style={styles.routeRow}>
+        {routes.map((route) => (
+          <RouteRow
+            key={route.id}
+            route={route}
+            isActive={route.id === activeRouteId}
+            onPress={() => setActiveRouteId(route.id === activeRouteId ? null : route.id)}
+            onDelete={() => confirmDelete(route)}
+          />
+        ))}
+      </View>
     </ContentContainer>
   );
 }
@@ -155,6 +157,10 @@ const styles = StyleSheet.create({
   },
   rowContent: {
     flex: 1,
+  },
+  routeRow: {
+    gap: n(26),
+    paddingBottom: n(12),
   },
   routeName: {
     fontSize: n(26),
