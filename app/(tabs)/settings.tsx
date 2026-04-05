@@ -7,6 +7,9 @@ import { StyledButton } from "@/components/StyledButton";
 import { n } from "@/utils/scaling";
 import * as Application from "expo-application";
 
+const ENABLE_TEXT = "Enabled";
+const DISABLE_TEXT = "Disabled";
+
 export default function SettingsScreen() {
   const [locationPermission, setLocationPermission] = useState<string>("unknown");
   const version = Application.nativeApplicationVersion;
@@ -16,13 +19,13 @@ export default function SettingsScreen() {
       const granted = await PermissionsAndroid.check(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
-      setLocationPermission(granted ? "Granted" : "Denied");
+      setLocationPermission(granted ? ENABLE_TEXT : DISABLE_TEXT);
     };
     checkPermission();
   }, []);
 
   const handleLocationPermission = async () => {
-    if (locationPermission === "Enabled") {
+    if (locationPermission === ENABLE_TEXT) {
       Linking.openSettings();
       return;
     }
@@ -30,12 +33,12 @@ export default function SettingsScreen() {
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     );
     if (result === PermissionsAndroid.RESULTS.GRANTED) {
-      setLocationPermission("Enabled");
+      setLocationPermission(ENABLE_TEXT);
     } else if (result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-      setLocationPermission("Disabled");
+      setLocationPermission(DISABLE_TEXT);
       Linking.openSettings();
     } else {
-      setLocationPermission("Disabled");
+      setLocationPermission(DISABLE_TEXT);
     }
   };
 
