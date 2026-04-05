@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, type ViewStyle } from "react-native";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { n } from "@/utils/scaling";
 import { HapticPressable } from "./HapticPressable";
@@ -64,17 +64,19 @@ interface ToggleSwitchProps {
   label: string;
   onValueChange: (value: boolean) => void;
   value: boolean;
+  style?: ViewStyle;
 }
 
 export function ToggleSwitch({
   label,
   value,
   onValueChange,
+  style,
 }: ToggleSwitchProps) {
   return (
     <HapticPressable
       onPress={() => onValueChange(!value)}
-      style={styles.container}
+      style={[styles.container, style]}
     >
       <View style={styles.switchTouchable}>
         <ToggleSwitchGraphic value={value} />

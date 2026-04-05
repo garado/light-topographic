@@ -5,6 +5,8 @@ import { StyleSheet, View, Linking, PermissionsAndroid } from "react-native";
 import ContentContainer from "@/components/ContentContainer";
 import { SelectorButton } from "@/components/SelectorButton";
 import { StyledButton } from "@/components/StyledButton";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
+import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useLayerPresets } from "@/contexts/LayerPresetsContext";
 import { confirmState } from "@/utils/confirmState";
 import { n } from "@/utils/scaling";
@@ -16,6 +18,7 @@ export default function SettingsScreen() {
   const [locationPermission, setLocationPermission] = useState<string>("unknown");
   const version = Application.nativeApplicationVersion;
   const { resetToDefaults } = useLayerPresets();
+  const { invertColors, setInvertColors } = useInvertColors();
 
   useFocusEffect(
     useCallback(() => {
@@ -62,7 +65,7 @@ export default function SettingsScreen() {
           value={locationPermission}
           onPress={handleLocationPermission}
         />
-        <StyledButton onPress={() => router.push("/settings/customise")} text="Customise" />
+        <ToggleSwitch label="Invert Colors" style={styles.invert} value={invertColors} onValueChange={setInvertColors} />
         <StyledButton onPress={() => router.push("/settings/map-tile-cache")} text="Map Tile Cache" />
         <StyledButton
           onPress={() => router.push({
@@ -85,5 +88,10 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   settings: {
     gap: n(26)
+  },
+  invert: {
+    width: n(300),
+    marginLeft: n(-8.6), // hacky but whatever
+    paddingTop: n(-9),
   }
 });
