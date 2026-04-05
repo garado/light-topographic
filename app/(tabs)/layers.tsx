@@ -63,19 +63,21 @@ export default function LayersScreen() {
         },
       ]}
     >
-      {presets.map((preset) => (
-        <PresetRow
-          key={preset.id}
-          preset={preset}
-          editMode={editMode}
-          active={preset.id === activePresetId}
-          onPress={() => editMode
-            ? router.push(`/layers/edit-preset?presetId=${preset.id}`)
-            : applyPreset(preset.id)
-          }
-          onDelete={() => deletePreset(preset.id)}
-        />
-      ))}
+      <View style={styles.presetList}>
+        {presets.map((preset) => (
+          <PresetRow
+            key={preset.id}
+            preset={preset}
+            editMode={editMode}
+            active={preset.id === activePresetId}
+            onPress={() => editMode
+              ? router.push(`/layers/edit-preset?presetId=${preset.id}`)
+              : applyPreset(preset.id)
+            }
+            onDelete={() => deletePreset(preset.id)}
+          />
+        ))}
+      </View>
     </ContentContainer>
   );
 }
@@ -91,5 +93,8 @@ const styles = StyleSheet.create({
   },
   deleteBtn: {
     padding: n(4),
+  },
+  presetList: {
+    gap: n(26)
   },
 });
