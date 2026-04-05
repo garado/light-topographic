@@ -10,15 +10,25 @@ export type MapLayers = {
   labels: LayerSettings;
   water: LayerSettings;
   route: LayerSettings;
+  poiCamping: LayerSettings;
+  poiParking: LayerSettings;
+  poiViewpoints: LayerSettings;
+  poiAmenities: LayerSettings;
+  poiRestrooms: LayerSettings;
 };
 
 const DEFAULT_LAYERS: MapLayers = {
-  contours: { visible: true, color: true },
-  trails: { visible: true, color: true },
-  roads: { visible: true, color: false },
-  labels: { visible: true, color: false },
-  water: { visible: true, color: true },
-  route: { visible: true, color: true },
+  contours:     { visible: true,  color: true  },
+  trails:       { visible: true,  color: true  },
+  roads:        { visible: true,  color: false },
+  labels:       { visible: true,  color: false },
+  water:        { visible: true,  color: true  },
+  route:        { visible: true,  color: true  },
+  poiCamping:   { visible: true,  color: true  },
+  poiParking:   { visible: true,  color: false },
+  poiViewpoints:{ visible: true,  color: false },
+  poiAmenities: { visible: false, color: false },
+  poiRestrooms: { visible: false, color: false },
 };
 
 interface MapLayersContextType {

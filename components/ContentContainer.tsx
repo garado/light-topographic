@@ -17,6 +17,7 @@ interface RightAction {
 
 interface ContentContainerProps {
   children?: ReactNode;
+  footer?: ReactNode;
   contentGap?: number;
   contentWidth?: "wide" | "normal";
   headerTitle?: string;
@@ -28,6 +29,7 @@ interface ContentContainerProps {
 export default function ContentContainer({
   headerTitle,
   children,
+  footer,
   hideBackButton = false,
   rightAction,
   rightActions,
@@ -69,38 +71,39 @@ export default function ContentContainer({
         />
       )}
       <SwipeBackContainer enabled={canSwipeBack} onSwipeBack={handleBack}>
-        <View
-          style={[
-            styles.scrollWrapper,
-            { paddingBottom: hasNavbar ? undefined : n(20) },
-          ]}
-        >
-          <Animated.ScrollView
-            onLayout={(event) =>
-              setScrollViewHeight(event.nativeEvent.layout.height)
-            }
-            onScroll={handleScroll}
-            overScrollMode="never"
-            scrollEventThrottle={16}
-            showsVerticalScrollIndicator={false}
+        <View style={styles.swipeInner}>
+          <View
+            style={[
+              styles.scrollWrapper,
+              { paddingBottom: hasNavbar ? undefined : n(20) },
+            ]}
           >
-            <View
+            <Animated.ScrollView
               onLayout={(event) =>
-                setContentHeight(event.nativeEvent.layout.height)
+                setScrollViewHeight(event.nativeEvent.layout.height)
               }
-              style={[
-                styles.content,
-                {
-                  gap: n(contentGap),
-                  paddingLeft: contentWidth === "wide" ? n(20) : n(37),
-                  paddingRight: contentWidth === "wide" ? n(32) : n(46),
-                },
-              ]}
+              onScroll={handleScroll}
+              overScrollMode="never"
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
             >
-              {children ?? null}
-            </View>
-          </Animated.ScrollView>
-          {scrollIndicatorHeight > 0 && (
+              <View
+                onLayout={(event) =>
+                  setContentHeight(event.nativeEvent.layout.height)
+                }
+                style={[
+                  styles.content,
+                  {
+                    gap: n(contentGap),
+                    paddingLeft: contentWidth === "wide" ? n(20) : n(37),
+                    paddingRight: contentWidth === "wide" ? n(32) : n(46),
+                  },
+                ]}
+              >
+                {children ?? null}
+              </View>
+            </Animated.ScrollView>
+            {scrollIndicatorHeight > 0 && (
             <View
               style={[
                 styles.scrollIndicatorTrack,
@@ -128,6 +131,8 @@ export default function ContentContainer({
               />
             </View>
           )}
+          </View>
+          {footer && <View style={styles.footer}>{footer}</View>}
         </View>
       </SwipeBackContainer>
     </View>
@@ -139,6 +144,15 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     gap: n(14),
+  },
+  swipeInner: {
+    flex: 1,
+    flexDirection: "column",
+    width: "100%",
+  },
+  footer: {
+    alignItems: "center",
+    paddingBottom: n(20),
   },
   scrollWrapper: {
     flex: 1,

@@ -31,6 +31,11 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
       medium: { grayscale: { dark: "#313131", light: "#bbbbbb" }, colored: { dark: "#313131", light: "#bbbbbb" } },
       major:  { grayscale: { dark: "#424242", light: "#aaaaaa" }, colored: { dark: "#424242", light: "#aaaaaa" } },
     },
+    poiCamping:   { grayscale: { dark: "#888888", light: "#666666" }, colored: { dark: "#a3be8c", light: "#4a7a4a" } },
+    poiParking:   { grayscale: { dark: "#777777", light: "#777777" }, colored: { dark: "#81a1c1", light: "#2e6096" } },
+    poiViewpoint: { grayscale: { dark: "#aaaaaa", light: "#555555" }, colored: { dark: "#d08770", light: "#a04020" } },
+    poiAmenity:   { grayscale: { dark: "#666666", light: "#888888" }, colored: { dark: "#ebcb8b", light: "#8b6914" } },
+    poiRestrooms: { grayscale: { dark: "#666666", light: "#888888" }, colored: { dark: "#b48ead", light: "#7a4a7a" } },
   };
 
   type PaletteEntry = { grayscale: { dark: string; light: string }; colored: { dark: string; light: string } };
@@ -295,6 +300,121 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         paint: {
           "text-color": c(palette.peak),
           "text-halo-color": c(palette.labelHalo),
+          "text-halo-width": 1.5,
+        },
+      },
+
+      // POI — Camping
+      {
+        id: "poi-camping",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "poi",
+        minzoom: 12,
+        filter: ["in", "class", "campsite", "picnic_site", "wilderness_hut"],
+        layout: {
+          ...vis("poiCamping"),
+          "text-field": ["coalesce", ["get", "name"], "Camping"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 10,
+          "text-anchor": "top",
+          "text-offset": [0, 0.2],
+        },
+        paint: {
+          "text-color": c(palette.poiCamping, colored("poiCamping")),
+          "text-halo-color": c(palette.textHalo),
+          "text-halo-width": 1.5,
+        },
+      },
+
+      // POI — Parking
+      {
+        id: "poi-parking",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "poi",
+        minzoom: 13,
+        filter: ["==", "class", "parking"],
+        layout: {
+          ...vis("poiParking"),
+          "text-field": ["coalesce", ["get", "name"], "P"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 10,
+          "text-anchor": "top",
+          "text-offset": [0, 0.2],
+        },
+        paint: {
+          "text-color": c(palette.poiParking, colored("poiParking")),
+          "text-halo-color": c(palette.textHalo),
+          "text-halo-width": 1.5,
+        },
+      },
+
+      // POI — Viewpoints
+      {
+        id: "poi-viewpoints",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "poi",
+        minzoom: 12,
+        filter: ["in", "class", "viewpoint", "attraction"],
+        layout: {
+          ...vis("poiViewpoints"),
+          "text-field": ["coalesce", ["get", "name"], "View"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 10,
+          "text-anchor": "top",
+          "text-offset": [0, 0.2],
+        },
+        paint: {
+          "text-color": c(palette.poiViewpoint, colored("poiViewpoints")),
+          "text-halo-color": c(palette.textHalo),
+          "text-halo-width": 1.5,
+        },
+      },
+
+      // POI — Amenities
+      {
+        id: "poi-amenities",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "poi",
+        minzoom: 14,
+        filter: ["in", "class", "drinking_water", "shelter", "waste_basket"],
+        layout: {
+          ...vis("poiAmenities"),
+          "text-field": ["get", "name"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 10,
+          "text-anchor": "top",
+          "text-offset": [0, 0.2],
+        },
+        paint: {
+          "text-color": c(palette.poiAmenity, colored("poiAmenities")),
+          "text-halo-color": c(palette.textHalo),
+          "text-halo-width": 1.5,
+        },
+      },
+
+      // POI — Restrooms
+      {
+        id: "poi-restrooms",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "poi",
+        minzoom: 14,
+        filter: ["==", "class", "toilets"],
+        layout: {
+          ...vis("poiRestrooms"),
+          "text-field": ["coalesce", ["get", "name"], "Restroom"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 10,
+          "text-anchor": "top",
+          "text-offset": [0, 0.2],
+        },
+        paint: {
+          "text-color": c(palette.poiRestrooms, colored("poiRestrooms")),
+          "text-halo-color": c(palette.textHalo),
           "text-halo-width": 1.5,
         },
       },
