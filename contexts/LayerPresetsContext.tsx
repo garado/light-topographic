@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useContext } from "react";
 import { usePersistedState } from "@/hooks/usePersistedState";
 import { useMapLayers, type MapLayers } from "@/contexts/MapLayersContext";
+import { DEFAULT_PRESETS } from "@/utils/defaultPresets";
 
 export type LayerPreset = {
   id: string;
@@ -8,51 +9,13 @@ export type LayerPreset = {
   layers: MapLayers;
 };
 
-const DEFAULT_PRESETS: LayerPreset[] = [
-  {
-    id: "default",
-    name: "Default",
-    layers: {
-      contours: { visible: false, color: false },
-      trails:   { visible: true,  color: false },
-      roads:    { visible: true,  color: false },
-      labels:   { visible: true,  color: false },
-      water:    { visible: true,  color: false },
-      route:    { visible: true,  color: true  },
-    },
-  },
-  {
-    id: "hiking",
-    name: "Hiking",
-    layers: {
-      contours: { visible: true,  color: true  },
-      trails:   { visible: true,  color: true  },
-      roads:    { visible: true,  color: false },
-      labels:   { visible: true,  color: false },
-      water:    { visible: true,  color: false },
-      route:    { visible: true,  color: true  },
-    },
-  },
-  {
-    id: "maximalist",
-    name: "Maximalist",
-    layers: {
-      contours: { visible: true, color: true },
-      trails:   { visible: true, color: true },
-      roads:    { visible: true, color: true },
-      labels:   { visible: true, color: true },
-      water:    { visible: true, color: true },
-      route:    { visible: true, color: true },
-    },
-  },
-];
-
 interface LayerPresetsContextType {
   presets: LayerPreset[];
   activePresetId: string | null;
   savePreset: (preset: LayerPreset) => void;
   deletePreset: (id: string) => void;
   applyPreset: (id: string) => void;
+  resetToDefaults: () => void;
 }
 
 const LayerPresetsContext = createContext<LayerPresetsContextType>({
@@ -61,6 +24,7 @@ const LayerPresetsContext = createContext<LayerPresetsContextType>({
   savePreset: () => {},
   deletePreset: () => {},
   applyPreset: () => {},
+  resetToDefaults: () => {},
 });
 
 export const useLayerPresets = () => useContext(LayerPresetsContext);
@@ -91,8 +55,13 @@ export const LayerPresetsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const resetToDefaults = () => {
+    setPresets(DEFAULT_PRESETS);
+    setActivePresetId(null);
+  };
+
   return (
-    <LayerPresetsContext.Provider value={{ presets, activePresetId, savePreset, deletePreset, applyPreset }}>
+    <LayerPresetsContext.Provider value={{ presets, activePresetId, savePreset, deletePreset, applyPreset, resetToDefaults }}>
       {children}
     </LayerPresetsContext.Provider>
   );

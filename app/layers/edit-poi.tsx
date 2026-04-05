@@ -12,7 +12,8 @@ const POI_LABELS: Record<keyof PoiLayers, string> = {
   poiParking:    "Parking",
   poiViewpoints: "Viewpoints",
   poiAmenities:  "Amenities",
-  poiRestrooms:  "Restrooms",
+  poiRestrooms:       "Restrooms",
+  poiTransportation:  "Transportation",
 };
 
 const DEFAULT_POI: PoiLayers = {
@@ -20,7 +21,8 @@ const DEFAULT_POI: PoiLayers = {
   poiParking:   { visible: true,  color: false },
   poiViewpoints:{ visible: true,  color: false },
   poiAmenities: { visible: false, color: false },
-  poiRestrooms: { visible: true,  color: false },
+  poiRestrooms:      { visible: true,  color: false },
+  poiTransportation: { visible: false, color: false },
 };
 
 function LayerRow({

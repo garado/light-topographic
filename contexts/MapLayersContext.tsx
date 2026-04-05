@@ -15,6 +15,7 @@ export type MapLayers = {
   poiViewpoints: LayerSettings;
   poiAmenities: LayerSettings;
   poiRestrooms: LayerSettings;
+  poiTransportation: LayerSettings;
 };
 
 const DEFAULT_LAYERS: MapLayers = {
@@ -28,7 +29,8 @@ const DEFAULT_LAYERS: MapLayers = {
   poiParking:   { visible: true,  color: false },
   poiViewpoints:{ visible: true,  color: false },
   poiAmenities: { visible: false, color: false },
-  poiRestrooms: { visible: false, color: false },
+  poiRestrooms:      { visible: false, color: false },
+  poiTransportation: { visible: false, color: false },
 };
 
 interface MapLayersContextType {

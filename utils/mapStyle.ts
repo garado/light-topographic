@@ -35,7 +35,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
     poiParking:   { grayscale: { dark: "#777777", light: "#777777" }, colored: { dark: "#81a1c1", light: "#2e6096" } },
     poiViewpoint: { grayscale: { dark: "#aaaaaa", light: "#555555" }, colored: { dark: "#d08770", light: "#a04020" } },
     poiAmenity:   { grayscale: { dark: "#666666", light: "#888888" }, colored: { dark: "#ebcb8b", light: "#8b6914" } },
-    poiRestrooms: { grayscale: { dark: "#666666", light: "#888888" }, colored: { dark: "#b48ead", light: "#7a4a7a" } },
+    poiRestrooms:      { grayscale: { dark: "#666666", light: "#888888" }, colored: { dark: "#b48ead", light: "#7a4a7a" } },
+    poiTransportation: { grayscale: { dark: "#888888", light: "#666666" }, colored: { dark: "#88c0d0", light: "#2e6a7a" } },
   };
 
   type PaletteEntry = { grayscale: { dark: string; light: string }; colored: { dark: string; light: string } };
@@ -391,6 +392,29 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         },
         paint: {
           "text-color": c(palette.poiAmenity, colored("poiAmenities")),
+          "text-halo-color": c(palette.textHalo),
+          "text-halo-width": 1.5,
+        },
+      },
+
+      // POI — Transportation
+      {
+        id: "poi-transportation",
+        type: "symbol",
+        source: "osm",
+        "source-layer": "poi",
+        minzoom: 13,
+        filter: ["in", "class", "bus", "rail", "subway", "tram", "ferry", "airport"],
+        layout: {
+          ...vis("poiTransportation"),
+          "text-field": ["coalesce", ["get", "name"], ["get", "class"]],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 10,
+          "text-anchor": "top",
+          "text-offset": [0, 0.2],
+        },
+        paint: {
+          "text-color": c(palette.poiTransportation, colored("poiTransportation")),
           "text-halo-color": c(palette.textHalo),
           "text-halo-width": 1.5,
         },

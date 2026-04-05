@@ -6,6 +6,7 @@ export type PoiLayers = {
   poiViewpoints: LayerSettings;
   poiAmenities: LayerSettings;
   poiRestrooms: LayerSettings;
+  poiTransportation: LayerSettings;
 };
 
 export const editPoiState = {

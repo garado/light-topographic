@@ -24,7 +24,8 @@ const DEFAULT_LAYERS: MapLayers = {
   poiParking:   { visible: true,  color: false },
   poiViewpoints:{ visible: true,  color: false },
   poiAmenities: { visible: false, color: false },
-  poiRestrooms: { visible: false, color: false },
+  poiRestrooms:      { visible: false, color: false },
+  poiTransportation: { visible: false, color: false },
 };
 
 export default function EditPresetScreen() {
@@ -98,7 +99,8 @@ export default function EditPresetScreen() {
             poiParking:    layers.poiParking,
             poiViewpoints: layers.poiViewpoints,
             poiAmenities:  layers.poiAmenities,
-            poiRestrooms:  layers.poiRestrooms,
+            poiRestrooms:      layers.poiRestrooms,
+            poiTransportation: layers.poiTransportation,
           };
           router.push("/layers/edit-poi");
         }}

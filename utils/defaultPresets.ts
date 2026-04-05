@@ -1,0 +1,58 @@
+import type { LayerPreset } from "@/contexts/LayerPresetsContext";
+
+export const DEFAULT_PRESETS: LayerPreset[] = [
+  {
+    id: "default",
+    name: "Default",
+    layers: {
+      contours:     { visible: false, color: false },
+      trails:       { visible: true,  color: false },
+      roads:        { visible: true,  color: false },
+      labels:       { visible: true,  color: false },
+      water:        { visible: true,  color: false },
+      route:        { visible: true,  color: true  },
+      poiCamping:   { visible: false, color: false },
+      poiParking:   { visible: false, color: false },
+      poiViewpoints:{ visible: false, color: false },
+      poiAmenities: { visible: false, color: false },
+      poiRestrooms:      { visible: false, color: false },
+      poiTransportation: { visible: false, color: false },
+    },
+  },
+  {
+    id: "hiking",
+    name: "Hiking",
+    layers: {
+      contours:     { visible: true,  color: true  },
+      trails:       { visible: true,  color: true  },
+      roads:        { visible: true,  color: false },
+      labels:       { visible: true,  color: false },
+      water:        { visible: true,  color: false },
+      route:        { visible: true,  color: true  },
+      poiCamping:   { visible: true,  color: false },
+      poiParking:   { visible: false, color: false },
+      poiViewpoints:{ visible: true,  color: false },
+      poiAmenities: { visible: true,  color: false },
+      poiRestrooms:      { visible: true, color: false },
+      poiTransportation: { visible: false, color: false },
+    },
+  },
+  {
+    id: "maximalist",
+    name: "Maximalist",
+    layers: {
+      contours:     { visible: true, color: true },
+      trails:       { visible: true, color: true },
+      roads:        { visible: true, color: true },
+      labels:       { visible: true, color: true },
+      water:        { visible: true, color: true },
+      route:        { visible: true, color: true },
+      poiCamping:   { visible: true, color: true },
+      poiParking:   { visible: true, color: true },
+      poiViewpoints:{ visible: true, color: true },
+      poiAmenities: { visible: true, color: true },
+      poiRestrooms:      { visible: true, color: true },
+      poiTransportation: { visible: true, color: true },
+    },
+  },
+];
