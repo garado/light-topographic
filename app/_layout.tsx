@@ -1,5 +1,9 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
+
+SplashScreen.preventAutoHideAsync();
+SplashScreen.hideAsync();
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   InvertColorsProvider,

@@ -45,6 +45,7 @@ export default function MapScreen() {
 
   useEffect(() => {
     (async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
