@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
+import { StyledText } from "@/components/StyledText";
 import { n } from "@/utils/scaling";
 import { buildMapStyle } from "@/utils/mapStyle";
 import { useMapLayers } from "@/contexts/MapLayersContext";
@@ -320,6 +321,10 @@ export default function MapScreen() {
         />
       )}
 
+      <StyledText style={styles.attribution}>
+        Tiles by OSM US © OpenStreetMap © OpenMapTiles
+      </StyledText>
+
       <View style={styles.buttonRow}>
         {activeRoute && (
           <HapticPressable onPress={zoomToRoute}>
@@ -366,6 +371,13 @@ const styles = StyleSheet.create({
     height: DOT_SIZE,
     borderRadius: DOT_SIZE / 2,
     backgroundColor: "#ffffff",
+  },
+  attribution: {
+    position: "absolute",
+    bottom: n(6),
+    right: n(4),
+    textAlign: "right",
+    fontSize: n(9),
   },
   buttonRow: {
     position: "absolute",

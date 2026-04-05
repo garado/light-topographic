@@ -82,6 +82,9 @@ export default function CachedTilesScreen() {
             </MapLibreGL.ShapeSource>
           )}
         </MapLibreGL.MapView>
+        <StyledText style={styles.attribution}>
+          Tiles by OSM US © OpenStreetMap © OpenMapTiles
+        </StyledText>
         {activeRoute && (
           <View style={styles.buttonRow}>
             <HapticPressable onPress={() => {
@@ -116,6 +119,13 @@ const styles = StyleSheet.create({
   },
   mapContainer: {
     flex: 1,
+  },
+  attribution: {
+    position: "absolute",
+    bottom: n(6),
+    right: n(4),
+    textAlign: "right",
+    fontSize: n(9),
   },
   buttonRow: {
     position: "absolute",
