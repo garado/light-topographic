@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import ContentContainer from "@/components/ContentContainer";
 import { HapticPressable } from "@/components/HapticPressable";
 import { StyledButton } from "@/components/StyledButton";
@@ -46,6 +46,8 @@ function PresetRow({
 export default function LayersScreen() {
   const { presets, activePresetId, applyPreset, deletePreset } = useLayerPresets();
   const [editMode, setEditMode] = useState(false);
+
+  useFocusEffect(useCallback(() => { setEditMode(false); }, []));
 
   return (
     <ContentContainer
