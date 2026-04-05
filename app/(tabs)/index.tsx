@@ -321,6 +321,11 @@ export default function MapScreen() {
       )}
 
       <View style={styles.buttonRow}>
+        {activeRoute && (
+          <HapticPressable onPress={zoomToRoute}>
+            <MaterialIcons name="route" size={n(48)} color={invertColors ? "black" : "white"} />
+          </HapticPressable>
+        )}
         <HapticPressable onPress={cycleCompassMode}>
           <MaterialIcons
             name={compassMode === CompassMode.Heading ? "navigation" : "explore"}
@@ -329,11 +334,6 @@ export default function MapScreen() {
             style={{ transform: [{ rotate: compassMode === CompassMode.Free ? `${-bearing - 45}deg` : "-45deg" }] }}
           />
         </HapticPressable>
-        {activeRoute && (
-          <HapticPressable onPress={zoomToRoute}>
-            <MaterialIcons name="route" size={n(48)} color={invertColors ? "black" : "white"} />
-          </HapticPressable>
-        )}
         <HapticPressable onPress={jumpToLocation}>
           <MaterialIcons name={locateFollowing ? "gps-fixed" : "gps-not-fixed"} size={n(48)} color={invertColors ? "black" : "white"} />
         </HapticPressable>

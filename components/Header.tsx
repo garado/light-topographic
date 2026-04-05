@@ -56,9 +56,11 @@ export function Header({
           </View>
         </HapticPressable>
       )}
-      <StyledText numberOfLines={1} style={styles.title} pointerEvents="none">
-        {headerTitle}
-      </StyledText>
+      <View pointerEvents="none" style={styles.title}>
+        <StyledText numberOfLines={1} style={styles.title} pointerEvents="none">
+          {headerTitle}
+        </StyledText>
+      </View>
       {actions.length > 0 ? (
         <View style={styles.rightActions}>
           {actions.filter((a) => a.show !== false).map((a) => (

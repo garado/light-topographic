@@ -32,16 +32,16 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <InvertColorsProvider>
         <MapLayersProvider>
-        <LayerPresetsProvider>
-        <RoutesProvider>
-        <MapStyleProvider>
-        <OptionExampleProvider>
-          <StatusBar hidden />
-          <RootLayout />
-        </OptionExampleProvider>
-        </MapStyleProvider>
-        </RoutesProvider>
-        </LayerPresetsProvider>
+          <LayerPresetsProvider>
+            <RoutesProvider>
+              <MapStyleProvider>
+                <OptionExampleProvider>
+                  <StatusBar hidden />
+                  <RootLayout />
+                </OptionExampleProvider>
+              </MapStyleProvider>
+            </RoutesProvider>
+          </LayerPresetsProvider>
         </MapLayersProvider>
       </InvertColorsProvider>
     </GestureHandlerRootView>

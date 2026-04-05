@@ -145,9 +145,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   emptyHint: {
-    fontSize: n(14),
+    fontSize: n(16),
     textAlign: "center",
-    opacity: 0.5,
   },
   row: {
     flexDirection: "row",

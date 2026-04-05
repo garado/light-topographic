@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, View, Linking, PermissionsAndroid } from "react-native";
 import ContentContainer from "@/components/ContentContainer";
@@ -8,20 +8,6 @@ import { n } from "@/utils/scaling";
 
 export default function SettingsScreen() {
   const [locationPermission, setLocationPermission] = useState<string>("unknown");
-
-  const params = useLocalSearchParams<{
-    confirmed?: string;
-    action?: string;
-  }>();
-
-  useEffect(() => {
-    if (params.confirmed === "true") {
-      router.setParams({ confirmed: undefined, action: undefined });
-      if (params.action === "exampleAction") {
-        console.log("Example action confirmed!");
-      }
-    }
-  }, [params.confirmed, params.action]);
 
   useEffect(() => {
     const checkPermission = async () => {

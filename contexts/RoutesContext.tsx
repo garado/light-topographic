@@ -22,9 +22,9 @@ const RoutesContext = createContext<RoutesContextType>({
   routes: [],
   activeRouteId: null,
   activeRoute: null,
-  addRoute: () => {},
-  removeRoute: () => {},
-  setActiveRouteId: () => {},
+  addRoute: () => { },
+  removeRoute: () => { },
+  setActiveRouteId: () => { },
 });
 
 export const useRoutes = () => useContext(RoutesContext);
