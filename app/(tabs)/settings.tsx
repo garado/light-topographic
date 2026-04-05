@@ -73,13 +73,13 @@ export default function SettingsScreen() {
           onPress={() => router.push({
             pathname: "/confirm",
             params: {
-              title: "Reset Presets",
+              title: "Reset Layer Presets",
               message: "This will delete all your presets and restore the defaults.",
               confirmText: "Reset",
               action: "resetPresets",
             },
           })}
-          text="Reset Presets"
+          text="Reset Layer Presets"
         />
         <StyledButton onPress={() => router.push("/settings/faq")} text="FAQ" />
         <StyledButton onPress={() => router.push("/settings/attribution")} text="Attribution" />
