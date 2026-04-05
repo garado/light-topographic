@@ -46,7 +46,7 @@ export default function SettingsScreen() {
     <ContentContainer headerTitle={`Settings (v${version})`} hideBackButton>
       <View style={styles.settings}>
         <SelectorButton
-          label="Location Permission"
+          label="Location Permissions"
           value={locationPermission}
           onPress={handleLocationPermission}
         />

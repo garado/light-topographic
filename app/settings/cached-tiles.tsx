@@ -6,16 +6,21 @@ import { NativeModules } from "react-native";
 
 const { MLRNModule } = NativeModules;
 import { StyleSheet, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import { Header } from "@/components/Header";
+import { HapticPressable } from "@/components/HapticPressable";
 import { StyledText } from "@/components/StyledText";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { type MapLayers, useMapLayers } from "@/contexts/MapLayersContext";
+import { useRoutes } from "@/contexts/RoutesContext";
 import { buildMapStyle } from "@/utils/mapStyle";
 import { n } from "@/utils/scaling";
 
 export default function CachedTilesScreen() {
   const { invertColors } = useInvertColors();
   const { layers, setAllLayers } = useMapLayers();
+  const { activeRoute } = useRoutes();
+  const cameraRef = useRef<MapLibreGL.Camera>(null);
   const snapshot = useRef<MapLayers | null>(null);
   const MAP_STYLE = useMemo(() => buildMapStyle(layers), [layers]);
   const [coords, setCoords] = useState<[number, number] | null>(null);
@@ -48,21 +53,50 @@ export default function CachedTilesScreen() {
           Offline mode (only cached tiles are shown)
         </StyledText>
       </View>
-      <MapLibreGL.MapView
-        style={styles.map}
-        mapStyle={MAP_STYLE}
-        logoEnabled={false}
-        attributionEnabled={false}
-        compassEnabled={false}
-      >
-        {coords && (
-          <MapLibreGL.Camera
-            zoomLevel={13}
-            centerCoordinate={coords}
-            animationMode="none"
-          />
+      <View style={styles.mapContainer}>
+        <MapLibreGL.MapView
+          style={StyleSheet.absoluteFill}
+          mapStyle={MAP_STYLE}
+          logoEnabled={false}
+          attributionEnabled={false}
+          compassEnabled={false}
+        >
+          {coords && (
+            <MapLibreGL.Camera
+              ref={cameraRef}
+              zoomLevel={13}
+              centerCoordinate={coords}
+              animationMode="none"
+            />
+          )}
+          {activeRoute && layers.route.visible && (
+            <MapLibreGL.ShapeSource id="route" shape={activeRoute.geojson}>
+              <MapLibreGL.LineLayer
+                id="route-line"
+                style={{
+                  lineColor: layers.route.color ? "#ebcb8b" : "#ffffff",
+                  lineWidth: 3,
+                  lineOpacity: 0.9,
+                }}
+              />
+            </MapLibreGL.ShapeSource>
+          )}
+        </MapLibreGL.MapView>
+        {activeRoute && (
+          <View style={styles.buttonRow}>
+            <HapticPressable onPress={() => {
+              if (!activeRoute || !cameraRef.current) return;
+              cameraRef.current.fitBounds(
+                [activeRoute.bounds[2], activeRoute.bounds[3]],
+                [activeRoute.bounds[0], activeRoute.bounds[1]],
+                50, 600,
+              );
+            }}>
+              <MaterialIcons name="route" size={n(48)} color={invertColors ? "black" : "white"} />
+            </HapticPressable>
+          </View>
         )}
-      </MapLibreGL.MapView>
+      </View>
     </View>
   );
 }
@@ -80,7 +114,13 @@ const styles = StyleSheet.create({
     fontSize: n(14),
     opacity: 0.5,
   },
-  map: {
+  mapContainer: {
     flex: 1,
+  },
+  buttonRow: {
+    position: "absolute",
+    bottom: n(20),
+    right: n(20),
+    elevation: 10,
   },
 });
