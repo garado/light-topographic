@@ -15,7 +15,6 @@ MapLibreGL.setAccessToken("pk.placeholder");
 
 enum LocateMode { Free, Centered, Following }
 enum CompassMode { Free, North, Heading }
-MapLibreGL.offlineManager.setTileCountLimit(5000);
 
 const DOT_SIZE = 12;
 const CONE_HEIGHT = DOT_SIZE * 1.5;
@@ -44,8 +43,8 @@ export default function MapScreen() {
   const [bearing, setBearing] = useState(0);
 
   useEffect(() => {
+    MapLibreGL.offlineManager.setTileCountLimit(5000);
     (async () => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
