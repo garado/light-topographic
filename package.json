@@ -1,45 +1,45 @@
 {
-  "name": "appname",
-  "main": "expo-router/entry",
-  "version": "1.0.0",
-  "scripts": {
-    "dev": "expo run:android",
-    "sync-version": "bun scripts/sync-version.js",
-    "generate-icon": "bun scripts/generate-icon.js",
-    "generate-readme-image": "bun scripts/generate-readme-image.js",
-    "check": "ultracite check",
-    "fix": "ultracite fix"
-  },
-  "dependencies": {
-    "@expo/vector-icons": "^15.0.3",
-    "@maplibre/maplibre-react-native": "^10.4.2",
-    "@react-native-async-storage/async-storage": "^2.2.0",
-    "@react-native-community/geolocation": "^3.4.0",
-    "expo": "~55.0.9",
-    "expo-application": "^55.0.12",
-    "expo-constants": "~55.0.0",
-    "expo-document-picker": "^55.0.11",
-    "expo-file-system": "^55.0.14",
-    "expo-font": "^55.0.4",
-    "expo-haptics": "~55.0.0",
-    "expo-linking": "~55.0.0",
-    "expo-router": "~55.0.0",
-    "expo-splash-screen": "^55.0.13",
-    "expo-system-ui": "~55.0.0",
-    "fast-xml-parser": "^5.5.10",
-    "react": "19.2.0",
-    "react-native": "0.83.4",
-    "react-native-compass-heading": "^2.0.2",
-    "react-native-gesture-handler": "~2.30.0",
-    "react-native-safe-area-context": "^5.6.2",
-    "react-native-screens": "^4.23.0"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.4.9",
-    "@types/react": "~19.2.0",
-    "canvas": "^3.2.1",
-    "typescript": "~5.9.2",
-    "ultracite": "^7.4.0"
-  },
-  "private": true
+	"name": "appname",
+	"main": "expo-router/entry",
+	"version": "1.0.0-rc.1",
+	"scripts": {
+		"dev": "expo run:android",
+		"sync-version": "bun scripts/sync-version.js",
+		"generate-icon": "bun scripts/generate-icon.js",
+		"generate-readme-image": "bun scripts/generate-readme-image.js",
+		"check": "ultracite check",
+		"fix": "ultracite fix"
+	},
+	"dependencies": {
+		"@expo/vector-icons": "^15.0.3",
+		"@maplibre/maplibre-react-native": "^10.4.2",
+		"@react-native-async-storage/async-storage": "^2.2.0",
+		"@react-native-community/geolocation": "^3.4.0",
+		"expo": "~55.0.9",
+		"expo-application": "^55.0.12",
+		"expo-constants": "~55.0.0",
+		"expo-document-picker": "^55.0.11",
+		"expo-file-system": "^55.0.14",
+		"expo-font": "^55.0.4",
+		"expo-haptics": "~55.0.0",
+		"expo-linking": "~55.0.0",
+		"expo-router": "~55.0.0",
+		"expo-splash-screen": "^55.0.13",
+		"expo-system-ui": "~55.0.0",
+		"fast-xml-parser": "^5.5.10",
+		"react": "19.2.0",
+		"react-native": "0.83.4",
+		"react-native-compass-heading": "^2.0.2",
+		"react-native-gesture-handler": "~2.30.0",
+		"react-native-safe-area-context": "^5.6.2",
+		"react-native-screens": "^4.23.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.9",
+		"@types/react": "~19.2.0",
+		"canvas": "^3.2.1",
+		"typescript": "~5.9.2",
+		"ultracite": "^7.4.0"
+	},
+	"private": true
 }

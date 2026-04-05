@@ -2,7 +2,7 @@
   "expo": {
     "name": "Topographic",
     "slug": "topographic",
-    "version": "1.0.0",
+    "version": "1.0.0-rc.1",
     "orientation": "portrait",
     "scheme": "topographic",
     "icon": "./assets/images/icon.png",
