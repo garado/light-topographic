@@ -11,25 +11,32 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
   const dark = !invertColors;
   const colored = (key: keyof MapLayers) => layers[key].color;
 
-  // Base theme palette
-  const bgColor         = dark ? "#000000" : "#ffffff";
-  const landcoverColor  = dark ? "#0d0d0d"  : "#f0f0f0";
-  const landuseColor    = dark ? "#141414"  : "#e8e8e8";
-  const parkColor       = dark ? "#161616"  : "#e4ede4";
-  const labelColor      = dark ? "#ffffff"  : "#111111";
-  const labelHalo       = dark ? "#000000"  : "#ffffff";
-  const peakLabelColor  = dark ? "#cccccc"  : "#333333";
-  const textHaloColor   = dark ? "#0d0d0d"  : "#ffffff";
+  const palette = {
+    background:   { grayscale: { dark: "#000000", light: "#ffffff" }, colored: { dark: "#000000", light: "#ffffff" } },
+    landcover:    { grayscale: { dark: "#0d0d0d",  light: "#f0f0f0" }, colored: { dark: "#0d0d0d",  light: "#f0f0f0" } },
+    landuse:      { grayscale: { dark: "#141414",  light: "#e8e8e8" }, colored: { dark: "#141414",  light: "#e8e8e8" } },
+    park:         { grayscale: { dark: "#161616",  light: "#eeeeee" }, colored: { dark: "#161616",  light: "#e4ede4" } },
+    labels:       { grayscale: { dark: "#ffffff",  light: "#111111" }, colored: { dark: "#ffffff",  light: "#111111" } },
+    labelHalo:    { grayscale: { dark: "#000000",  light: "#ffffff" }, colored: { dark: "#000000",  light: "#ffffff" } },
+    peak:         { grayscale: { dark: "#cccccc",  light: "#333333" }, colored: { dark: "#cccccc",  light: "#333333" } },
+    textHalo:     { grayscale: { dark: "#0d0d0d",  light: "#ffffff" }, colored: { dark: "#0d0d0d",  light: "#ffffff" } },
+    contours:     { grayscale: { dark: "#ffffff",  light: "#777777" }, colored: { dark: "#c87941",  light: "#c87941" } },
+    contourIndex: { grayscale: { dark: "#ffffff",  light: "#555555" }, colored: { dark: "#a05020",  light: "#a05020" } },
+    trails:       { grayscale: { dark: "#888888",  light: "#777777" }, colored: { dark: "#a3be8c",  light: "#a3be8c" } },
+    trailLabel:   { grayscale: { dark: "#aaaaaa",  light: "#666666" }, colored: { dark: "#aaaaaa",  light: "#666666" } },
+    waterFill:    { grayscale: { dark: "#262626",  light:   "#dddddd" }, colored: { dark: "#5e81ac",  light: "#5e81ac" } },
+    waterway:     { grayscale: { dark: "#2d2d2d",  light:   "#dddddd" }, colored: { dark: "#5e81ac",  light: "#5e81ac" } },
+    roads: {
+      minor:  { grayscale: { dark: "#262626", light: "#cccccc" }, colored: { dark: "#262626", light: "#cccccc" } },
+      medium: { grayscale: { dark: "#313131", light: "#bbbbbb" }, colored: { dark: "#313131", light: "#bbbbbb" } },
+      major:  { grayscale: { dark: "#424242", light: "#aaaaaa" }, colored: { dark: "#424242", light: "#aaaaaa" } },
+    },
+  };
 
-  const contourColor      = colored("contours") ? "#c87941" : (dark ? "#ffffff" : "#777777");
-  const contourIndexColor = colored("contours") ? "#a05020" : (dark ? "#ffffff" : "#555555");
-  const trailColor        = colored("trails")   ? "#a3be8c" : (dark ? "#888888" : "#777777");
-  const trailLabelColor   = colored("trails")   ? "#a3be8c" : (dark ? "#aaaaaa" : "#666666");
-  const waterFillColor    = colored("water")    ? "#5e81ac" : (dark ? "#262626" : "#c4d8ec");
-  const waterwayColor     = colored("water")    ? "#5e81ac" : (dark ? "#2d2d2d" : "#c4d8ec");
-  const roadMinorColor    = dark ? "#262626" : "#cccccc";
-  const roadMediumColor   = dark ? "#313131" : "#bbbbbb";
-  const roadMajorColor    = dark ? "#424242" : "#aaaaaa";
+  type PaletteEntry = { grayscale: { dark: string; light: string }; colored: { dark: string; light: string } };
+  const theme = dark ? "dark" : "light";
+  const c = (entry: PaletteEntry, isColored = false) =>
+    isColored ? entry.colored[theme] : entry.grayscale[theme];
 
   return JSON.stringify({
     version: 8,
@@ -57,7 +64,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
     },
     layers: [
       // Background
-      { id: "background", type: "background", paint: { "background-color": bgColor } },
+      { id: "background", type: "background", paint: { "background-color": c(palette.background) } },
 
       // Land
       {
@@ -65,21 +72,21 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         type: "fill",
         source: "osm",
         "source-layer": "landcover",
-        paint: { "fill-color": landcoverColor },
+        paint: { "fill-color": c(palette.landcover) },
       },
       {
         id: "landuse",
         type: "fill",
         source: "osm",
         "source-layer": "landuse",
-        paint: { "fill-color": landuseColor },
+        paint: { "fill-color": c(palette.landuse) },
       },
       {
         id: "park",
         type: "fill",
         source: "osm",
         "source-layer": "park",
-        paint: { "fill-color": parkColor },
+        paint: { "fill-color": c(palette.park) },
       },
 
       // Water
@@ -89,7 +96,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         source: "osm",
         "source-layer": "water",
         layout: vis("water"),
-        paint: { "fill-color": waterFillColor },
+        paint: { "fill-color": c(palette.waterFill, colored("water")) },
       },
       {
         id: "waterway",
@@ -97,7 +104,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         source: "osm",
         "source-layer": "waterway",
         layout: vis("water"),
-        paint: { "line-color": waterwayColor, "line-width": 1 },
+        paint: { "line-color": c(palette.waterway, colored("water")), "line-width": 1 },
       },
 
       // Water names
@@ -114,8 +121,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "symbol-placement": "point",
         },
         paint: {
-          "text-color": labelColor,
-          "text-halo-color": textHaloColor,
+          "text-color": c(palette.labels),
+          "text-halo-color": c(palette.textHalo),
           "text-halo-width": 1.5,
         },
       },
@@ -128,7 +135,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "contours",
         layout: vis("contours"),
         filter: ["!", ["get", "idx"]],
-        paint: { "line-color": contourColor, "line-width": 0.5, "line-opacity": 0.9 },
+        paint: { "line-color": c(palette.contours, colored("contours")), "line-width": 0.5, "line-opacity": 0.9 },
       },
 
       // Contours — index (every 5th)
@@ -139,7 +146,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "contours",
         layout: vis("contours"),
         filter: ["get", "idx"],
-        paint: { "line-color": contourIndexColor, "line-width": 1, "line-opacity": 1 },
+        paint: { "line-color": c(palette.contourIndex, colored("contours")), "line-width": 1, "line-opacity": 1 },
       },
 
       // Contour elevation labels (index lines only)
@@ -159,8 +166,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-max-angle": 30,
         },
         paint: {
-          "text-color": contourIndexColor,
-          "text-halo-color": "#0d0d0d",
+          "text-color": c(palette.contourIndex, colored("contours")),
+          "text-halo-color": c(palette.textHalo),
           "text-halo-width": 1.5,
         },
       },
@@ -173,7 +180,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "transportation",
         layout: vis("roads"),
         filter: ["in", "class", "minor", "service", "track"],
-        paint: { "line-color": roadMinorColor, "line-width": 1 },
+        paint: { "line-color": c(palette.roads.minor, colored("roads")), "line-width": 1 },
       },
       {
         id: "roads-medium",
@@ -182,7 +189,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "transportation",
         layout: vis("roads"),
         filter: ["in", "class", "tertiary", "secondary"],
-        paint: { "line-color": roadMediumColor, "line-width": 1.5 },
+        paint: { "line-color": c(palette.roads.medium, colored("roads")), "line-width": 1.5 },
       },
       {
         id: "roads-major",
@@ -191,7 +198,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "transportation",
         layout: vis("roads"),
         filter: ["in", "class", "primary", "trunk", "motorway"],
-        paint: { "line-color": roadMajorColor, "line-width": 2.5 },
+        paint: { "line-color": c(palette.roads.major, colored("roads")), "line-width": 2.5 },
       },
 
       // Road labels
@@ -210,8 +217,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "symbol-spacing": 300,
         },
         paint: {
-          "text-color": labelColor,
-          "text-halo-color": textHaloColor,
+          "text-color": c(palette.labels),
+          "text-halo-color": c(palette.textHalo),
           "text-halo-width": 1.5,
         },
       },
@@ -224,7 +231,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "trail",
         layout: { ...vis("trails"), "line-cap": "round" },
         paint: {
-          "line-color": trailColor,
+          "line-color": c(palette.trails, colored("trails")),
           "line-width": 1,
           "line-dasharray": [3, 2],
         },
@@ -245,8 +252,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-max-angle": 30,
         },
         paint: {
-          "text-color": trailLabelColor,
-          "text-halo-color": textHaloColor,
+          "text-color": c(palette.trailLabel, colored("trails")),
+          "text-halo-color": c(palette.textHalo),
           "text-halo-width": 1.5,
         },
       },
@@ -265,8 +272,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-max-width": 8,
         },
         paint: {
-          "text-color": labelColor,
-          "text-halo-color": labelHalo,
+          "text-color": c(palette.labels),
+          "text-halo-color": c(palette.labelHalo),
           "text-halo-width": 1.5,
         },
       },
@@ -286,8 +293,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-offset": [0, 0.5],
         },
         paint: {
-          "text-color": peakLabelColor,
-          "text-halo-color": labelHalo,
+          "text-color": c(palette.peak),
+          "text-halo-color": c(palette.labelHalo),
           "text-halo-width": 1.5,
         },
       },
