@@ -2,8 +2,8 @@ import type { LayerPreset } from "@/contexts/LayerPresetsContext";
 
 export const DEFAULT_PRESETS: LayerPreset[] = [
   {
-    id: "default",
-    name: "Default",
+    id: "minimal",
+    name: "Minimal",
     layers: {
       contours:     { visible: false, color: false },
       trails:       { visible: true,  color: false },
