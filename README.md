@@ -46,7 +46,7 @@ Tap the Target icon to zoom to your current location. Tap again to have the map 
 
 The map provider OpenStreetMap does not allow automatic bulk predownloading of map tiles. However, Topographic does cache the tiles that have been downloaded during normal use.
 
-In "Settings > Cached Tiles," this cache can be previewed so you can see what will be available if you are out and lose cell service. If you're missing tiles around your planned route, you can move the map viewport around that area while you still have service to cache the tiles.
+In "Settings > Cached Tiles," this cache can be previewed so you can see what will be available if you are out and lose cell service.
 
 ## Known issues
 
