@@ -38,6 +38,22 @@ function routeTotalMiles(coords: [number, number][]): number {
   return total;
 }
 
+function scaleBarInfo(zoom: number, lat: number, units: "imperial" | "metric"): { widthPx: number; label: string } {
+  const metersPerPx = (156543.03392 * Math.cos(lat * Math.PI / 180)) / Math.pow(2, zoom);
+  const targetMeters = 80 * metersPerPx;
+  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
+  const nice = steps.find((s) => s >= targetMeters) ?? steps[steps.length - 1];
+  const widthPx = nice / metersPerPx;
+  let label: string;
+  if (units === "imperial") {
+    const feet = nice * 3.28084;
+    label = feet < 528 ? `${Math.round(feet)} ft` : `${(feet / 5280).toFixed(1)} mi`;
+  } else {
+    label = nice < 1000 ? `${nice} m` : `${(nice / 1000).toFixed(nice < 10000 ? 1 : 0)} km`;
+  }
+  return { widthPx, label };
+}
+
 function interpolateRoute(coords: [number, number][], t: number): [number, number] {
   if (t <= 0) return coords[0];
   if (t >= 1) return coords[coords.length - 1];
@@ -83,6 +99,7 @@ export default function MapScreen() {
   const [initialCoords, setInitialCoords] = useState<[number, number] | null>(null);
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [bearing, setBearing] = useState(0);
+  const [zoom, setZoom] = useState(13);
   const [lastFixTime, setLastFixTime] = useState<number | null>(null);
   const [lastFixLabel, setLastFixLabel] = useState("∞");
 
@@ -198,13 +215,16 @@ export default function MapScreen() {
     return () => clearInterval(id);
   }, [lastFixTime]);
 
-  const updateDotPosition = useCallback(async (feature?: { properties?: { heading?: number } }) => {
+  const updateDotPosition = useCallback(async (feature?: { properties?: { heading?: number; zoomLevel?: number } }) => {
     if (feature?.properties?.heading !== undefined) {
       bearingRef.current = feature.properties.heading;
       setBearing(feature.properties.heading);
       if (userHeadingRef.current !== null) {
         coneRotationAnim.setValue(userHeadingRef.current - feature.properties.heading);
       }
+    }
+    if (feature?.properties?.zoomLevel !== undefined) {
+      setZoom(feature.properties.zoomLevel);
     }
     if (!mapRef.current || !coords) return;
     const point = await mapRef.current.getPointInView(coords);
@@ -485,6 +505,18 @@ export default function MapScreen() {
         />
       )}
 
+      {(() => {
+        const lat = coords?.[1] ?? 0;
+        const { widthPx, label } = scaleBarInfo(zoom, lat, units);
+        const barColor = invertColors ? "black" : "white";
+        return (
+          <View style={[styles.scaleBar, { width: widthPx }]}>
+            <StyledText style={styles.scaleBarLabel}>{label}</StyledText>
+            <View style={[styles.scaleBarLine, { borderColor: barColor }]} />
+          </View>
+        );
+      })()}
+
       <StyledText style={styles.lastFix}>
         Last fix: {lastFixLabel}
       </StyledText>
@@ -560,6 +592,21 @@ const styles = StyleSheet.create({
     height: DOT_SIZE,
     borderRadius: DOT_SIZE / 2,
     backgroundColor: "#ffffff",
+  },
+  scaleBar: {
+    position: "absolute",
+    top: n(20),
+    left: n(4),
+  },
+  scaleBarLabel: {
+    fontSize: n(9),
+    textAlign: "left",
+  },
+  scaleBarLine: {
+    height: n(5),
+    borderBottomWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
   },
   lastFix: {
     position: "absolute",
