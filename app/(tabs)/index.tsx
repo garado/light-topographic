@@ -2,7 +2,7 @@ import MapLibreGL from "@maplibre/maplibre-react-native";
 import Geolocation from "@react-native-community/geolocation";
 import CompassHeading from "react-native-compass-heading";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Animated, PanResponder, PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
@@ -11,8 +11,11 @@ import { n } from "@/utils/scaling";
 import { buildMapStyle } from "@/utils/mapStyle";
 import { useMapLayers } from "@/contexts/MapLayersContext";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
+import { useMarkers } from "@/contexts/MarkersContext";
 import { useRoutes } from "@/contexts/RoutesContext";
 import { useUnits } from "@/contexts/UnitsContext";
+import { mapFocusState } from "@/utils/mapFocusState";
+import { newMarkerState } from "@/utils/newMarkerState";
 MapLibreGL.setAccessToken("pk.placeholder");
 
 enum LocateMode { Free, Centered, Following }
@@ -83,6 +86,7 @@ export default function MapScreen() {
   const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors), [layers, invertColors]);
   const { activeRoute } = useRoutes();
   const { units } = useUnits();
+  const { markers } = useMarkers();
 
   const mapRef = useRef<MapLibreGL.MapView>(null);
   const cameraRef = useRef<MapLibreGL.Camera>(null);
@@ -95,9 +99,13 @@ export default function MapScreen() {
   const coneRotationAnim = useRef(new Animated.Value(0)).current;
   const [hasHeading, setHasHeading] = useState(false);
 
+  const markersRef = useRef(markers);
+  markersRef.current = markers;
+
   const [coords, setCoords] = useState<[number, number] | null>(null);
   const [initialCoords, setInitialCoords] = useState<[number, number] | null>(null);
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
+  const [markerScreenPositions, setMarkerScreenPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [bearing, setBearing] = useState(0);
   const [zoom, setZoom] = useState(13);
   const [lastFixTime, setLastFixTime] = useState<number | null>(null);
@@ -152,6 +160,14 @@ export default function MapScreen() {
     if (!activeRoute) return 0;
     return routeTotalMiles(activeRoute.geojson.geometry.coordinates);
   }, [activeRoute]);
+
+  useFocusEffect(useCallback(() => {
+    if (mapFocusState.flyTo && cameraRef.current) {
+      setLocateMode(LocateMode.Free);
+      cameraRef.current.flyTo(mapFocusState.flyTo, 400);
+      mapFocusState.flyTo = null;
+    }
+  }, []));
 
   // initialize sensors + sensor callbacks for map
   useEffect(() => {
@@ -226,9 +242,23 @@ export default function MapScreen() {
     if (feature?.properties?.zoomLevel !== undefined) {
       setZoom(feature.properties.zoomLevel);
     }
-    if (!mapRef.current || !coords) return;
-    const point = await mapRef.current.getPointInView(coords);
-    setDotScreenPos({ x: point[0], y: point[1] });
+    if (!mapRef.current) return;
+    if (coords) {
+      const point = await mapRef.current.getPointInView(coords);
+      setDotScreenPos({ x: point[0], y: point[1] });
+    }
+    const currentMarkers = markersRef.current;
+    if (currentMarkers.length > 0 && mapRef.current) {
+      const entries = await Promise.all(
+        currentMarkers.map(async (m) => {
+          const point = await mapRef.current!.getPointInView(m.coords);
+          return [m.id, { x: point[0], y: point[1] }] as const;
+        }),
+      );
+      setMarkerScreenPositions(Object.fromEntries(entries));
+    } else {
+      setMarkerScreenPositions({});
+    }
   }, [coords, coneRotationAnim]);
 
   useEffect(() => {
@@ -406,6 +436,12 @@ export default function MapScreen() {
         rotateEnabled={compassMode !== CompassMode.Heading}
         onRegionIsChanging={onRegionChanging}
         onRegionDidChange={updateDotPosition}
+        onLongPress={(e: any) => {
+          const coords = e.geometry?.coordinates as [number, number] | undefined;
+          if (!coords) return;
+          newMarkerState.coords = coords;
+          router.push("/marker/new");
+        }}
       >
         <MapLibreGL.Camera
           ref={cameraRef}
@@ -505,6 +541,17 @@ export default function MapScreen() {
         />
       )}
 
+      {Object.entries(markerScreenPositions).map(([id, pos]) => (
+        <MaterialIcons
+          key={id}
+          name="place"
+          size={n(28)}
+          color={invertColors ? "black" : "white"}
+          style={[styles.markerPin, { left: pos.x - n(14), top: pos.y - n(28) }]}
+          pointerEvents="none"
+        />
+      ))}
+
       {(() => {
         const lat = coords?.[1] ?? 0;
         const { widthPx, label } = scaleBarInfo(zoom, lat, units);
@@ -592,6 +639,9 @@ const styles = StyleSheet.create({
     height: DOT_SIZE,
     borderRadius: DOT_SIZE / 2,
     backgroundColor: "#ffffff",
+  },
+  markerPin: {
+    position: "absolute",
   },
   scaleBar: {
     position: "absolute",

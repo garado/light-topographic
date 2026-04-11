@@ -5,6 +5,7 @@ export const TABS_CONFIG: readonly TabConfigItem[] = [
   { name: "Map", screenName: "index", iconName: "map" },
   { name: "Layers", screenName: "layers", iconName: "layers" },
   { name: "Routes", screenName: "routes", iconName: "route" },
+  { name: "Markers", screenName: "markers", iconName: "place" },
   { name: "Settings", screenName: "settings", iconName: "settings" },
 ] as const;
 

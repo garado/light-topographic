@@ -13,6 +13,7 @@ import { MapLayersProvider } from "@/contexts/MapLayersContext";
 import { LayerPresetsProvider } from "@/contexts/LayerPresetsContext";
 import { MapStyleProvider } from "@/contexts/MapStyleContext";
 import { OptionExampleProvider } from "@/contexts/OptionExampleContext";
+import { MarkersProvider } from "@/contexts/MarkersContext";
 import { RoutesProvider } from "@/contexts/RoutesContext";
 import { UnitsProvider } from "@/contexts/UnitsContext";
 
@@ -39,6 +40,7 @@ export default function App() {
       <InvertColorsProvider>
         <MapLayersProvider>
           <LayerPresetsProvider>
+            <MarkersProvider>
             <RoutesProvider>
               <MapStyleProvider>
                 <OptionExampleProvider>
@@ -47,6 +49,7 @@ export default function App() {
                 </OptionExampleProvider>
               </MapStyleProvider>
             </RoutesProvider>
+            </MarkersProvider>
           </LayerPresetsProvider>
         </MapLayersProvider>
       </InvertColorsProvider>
