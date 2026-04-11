@@ -18,6 +18,7 @@ enum LocateMode { Free, Centered, Following }
 enum CompassMode { Free, North, Heading }
 
 const DOT_SIZE = 12;
+
 const CONE_HEIGHT = DOT_SIZE * 1.5;
 const CONE_HALF_WIDTH = DOT_SIZE / 2;
 
@@ -296,18 +297,57 @@ export default function MapScreen() {
           centerCoordinate={initialCoords ?? [0, 0]}
           animationMode="none"
         />
-        {activeRoute && layers.route.visible && (
-          <MapLibreGL.ShapeSource id="route" shape={activeRoute.geojson}>
-            <MapLibreGL.LineLayer
-              id="route-line"
-              style={{
-                lineColor: layers.route.color ? "#ebcb8b" : "#ffffff",
-                lineWidth: 3,
-                lineOpacity: 0.9,
-              }}
-            />
-          </MapLibreGL.ShapeSource>
-        )}
+        {activeRoute && layers.route.visible && (() => {
+          const routeColor = layers.route.color ? "#ebcb8b" : "#ffffff";
+          const coords = activeRoute.geojson.geometry.coordinates;
+          return (
+            <>
+              <MapLibreGL.ShapeSource id="route" shape={activeRoute.geojson}>
+                <MapLibreGL.LineLayer
+                  id="route-line"
+                  style={{ lineColor: routeColor, lineWidth: 2, lineOpacity: 0.9 }}
+                />
+              </MapLibreGL.ShapeSource>
+              <MapLibreGL.ShapeSource id="route-arrows-src" shape={activeRoute.geojson}>
+                <MapLibreGL.SymbolLayer
+                  id="route-arrows"
+                  style={{
+                    symbolPlacement: "line",
+                    symbolSpacing: 60,
+                    textField: ">",
+                    textFont: ["Noto Sans Regular"],
+                    textSize: n(20),
+                    textColor: routeColor,
+                    textRotationAlignment: "map",
+                    textKeepUpright: false,
+                    textOpacity: 0.9,
+                  }}
+                />
+              </MapLibreGL.ShapeSource>
+              <MapLibreGL.ShapeSource
+                id="route-markers"
+                shape={{
+                  type: "FeatureCollection",
+                  features: [
+                    { type: "Feature", geometry: { type: "Point", coordinates: coords[0] }, properties: { marker: "start" } },
+                    { type: "Feature", geometry: { type: "Point", coordinates: coords[coords.length - 1] }, properties: { marker: "end" } },
+                  ],
+                }}
+              >
+                <MapLibreGL.CircleLayer
+                  id="route-marker-start"
+                  filter={["==", ["get", "marker"], "start"]}
+                  style={{ circleRadius: 4, circleColor: routeColor, circleStrokeWidth: 1.4, circleStrokeColor: "black" }}
+                />
+                <MapLibreGL.CircleLayer
+                  id="route-marker-end"
+                  filter={["==", ["get", "marker"], "end"]}
+                  style={{ circleRadius: 4, circleColor: "transparent", circleStrokeWidth: 3, circleStrokeColor: routeColor }}
+                />
+              </MapLibreGL.ShapeSource>
+            </>
+          );
+        })()}
       </MapLibreGL.MapView>
 
       {dotScreenPos && hasHeading && (
