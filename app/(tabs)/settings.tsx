@@ -10,6 +10,7 @@ import { StyledText } from "@/components/StyledText";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useLayerPresets } from "@/contexts/LayerPresetsContext";
+import { useUnits } from "@/contexts/UnitsContext";
 import { confirmState } from "@/utils/confirmState";
 import { n } from "@/utils/scaling";
 
@@ -21,6 +22,7 @@ export default function SettingsScreen() {
   const version = Application.nativeApplicationVersion;
   const { resetToDefaults } = useLayerPresets();
   const { invertColors, setInvertColors } = useInvertColors();
+  const { units, setUnits } = useUnits();
 
   useFocusEffect(
     useCallback(() => {
@@ -68,6 +70,11 @@ export default function SettingsScreen() {
           onPress={handleLocationPermission}
         />
         <ToggleSwitch label="Invert Colors" style={styles.invert} value={invertColors} onValueChange={setInvertColors} />
+        <SelectorButton
+          label="Units"
+          value={units === "imperial" ? "Imperial" : "Metric"}
+          onPress={() => setUnits(units === "imperial" ? "metric" : "imperial")}
+        />
         <StyledButton onPress={() => router.push("/settings/map-tile-cache")} text="Map Tile Cache" />
         <StyledButton
           onPress={() => router.push({

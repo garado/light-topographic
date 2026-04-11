@@ -14,6 +14,7 @@ import { LayerPresetsProvider } from "@/contexts/LayerPresetsContext";
 import { MapStyleProvider } from "@/contexts/MapStyleContext";
 import { OptionExampleProvider } from "@/contexts/OptionExampleContext";
 import { RoutesProvider } from "@/contexts/RoutesContext";
+import { UnitsProvider } from "@/contexts/UnitsContext";
 
 function RootLayout() {
   const { invertColors } = useInvertColors();
@@ -34,6 +35,7 @@ function RootLayout() {
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <UnitsProvider>
       <InvertColorsProvider>
         <MapLayersProvider>
           <LayerPresetsProvider>
@@ -48,6 +50,7 @@ export default function App() {
           </LayerPresetsProvider>
         </MapLayersProvider>
       </InvertColorsProvider>
+      </UnitsProvider>
     </GestureHandlerRootView>
   );
 }

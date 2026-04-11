@@ -12,6 +12,7 @@ import { buildMapStyle } from "@/utils/mapStyle";
 import { useMapLayers } from "@/contexts/MapLayersContext";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useRoutes } from "@/contexts/RoutesContext";
+import { useUnits } from "@/contexts/UnitsContext";
 MapLibreGL.setAccessToken("pk.placeholder");
 
 enum LocateMode { Free, Centered, Following }
@@ -22,6 +23,20 @@ const DOT_SIZE = 12;
 const CONE_HEIGHT = DOT_SIZE * 1.5;
 const CONE_HALF_WIDTH = DOT_SIZE / 2;
 const SCRUB_THUMB = 12;
+
+function routeTotalMiles(coords: [number, number][]): number {
+  const R = 3958.8;
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const [lon1, lat1] = coords[i - 1];
+    const [lon2, lat2] = coords[i];
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    total += R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  return total;
+}
 
 function interpolateRoute(coords: [number, number][], t: number): [number, number] {
   if (t <= 0) return coords[0];
@@ -51,6 +66,7 @@ export default function MapScreen() {
   const { invertColors } = useInvertColors();
   const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors), [layers, invertColors]);
   const { activeRoute } = useRoutes();
+  const { units } = useUnits();
 
   const mapRef = useRef<MapLibreGL.MapView>(null);
   const cameraRef = useRef<MapLibreGL.Camera>(null);
@@ -81,7 +97,7 @@ export default function MapScreen() {
   const scrubHeightRef = useRef(1);
   const scrubStartPosRef = useRef(0);
   const scrubBoundsCheckRef = useRef(0);
-  const scrubHandlerRef = useRef<(t: number) => void>(() => {});
+  const scrubHandlerRef = useRef<(t: number) => void>(() => { });
   scrubHandlerRef.current = (t: number) => {
     scrubPosRef.current = t;
     setScrubPos(t);
@@ -114,6 +130,11 @@ export default function MapScreen() {
     if (!activeRoute || !scrubVisible) return null;
     return interpolateRoute(activeRoute.geojson.geometry.coordinates, scrubPos);
   }, [activeRoute, scrubPos, scrubVisible]);
+
+  const routeMiles = useMemo(() => {
+    if (!activeRoute) return 0;
+    return routeTotalMiles(activeRoute.geojson.geometry.coordinates);
+  }, [activeRoute]);
 
   // initialize sensors + sensor callbacks for map
   useEffect(() => {
@@ -473,6 +494,14 @@ export default function MapScreen() {
       </StyledText>
 
       {activeRoute && scrubVisible && (
+        <StyledText style={styles.scrubberLabel}>
+          {units === "imperial"
+            ? `${(routeMiles * (1 - scrubPos)).toFixed(1)} mi`
+            : `${(routeMiles * 1.60934 * (1 - scrubPos)).toFixed(1)} km`} remaining
+        </StyledText>
+      )}
+
+      {activeRoute && scrubVisible && (
         <View
           style={styles.scrubber}
           onLayout={(e) => { scrubHeightRef.current = e.nativeEvent.layout.height; }}
@@ -554,6 +583,13 @@ const styles = StyleSheet.create({
     gap: n(20),
     alignItems: "center",
     elevation: 10,
+  },
+  scrubberLabel: {
+    position: "absolute",
+    left: n(4),
+    bottom: n(20),
+    fontSize: n(16),
+    textAlign: "right",
   },
   scrubber: {
     position: "absolute",
