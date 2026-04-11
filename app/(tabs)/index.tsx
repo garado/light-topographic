@@ -2,6 +2,7 @@ import MapLibreGL from "@maplibre/maplibre-react-native";
 import Geolocation from "@react-native-community/geolocation";
 import CompassHeading from "react-native-compass-heading";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { Animated, PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
@@ -41,7 +42,10 @@ export default function MapScreen() {
   const [initialCoords, setInitialCoords] = useState<[number, number] | null>(null);
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [bearing, setBearing] = useState(0);
+  const [lastFixTime, setLastFixTime] = useState<number | null>(null);
+  const [lastFixLabel, setLastFixLabel] = useState("∞");
 
+  // initialize sensors + sensor callbacks for map
   useEffect(() => {
     MapLibreGL.offlineManager.setTileCountLimit(5000);
     (async () => {
@@ -54,6 +58,7 @@ export default function MapScreen() {
         (pos) => {
           const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
           setCoords(c);
+          setLastFixTime(Date.now());
           coordsRef.current = c;
           setInitialCoords((prev) => prev ?? c);
         },
@@ -89,6 +94,18 @@ export default function MapScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // periodically update last fix time
+  useEffect(() => {
+    if (lastFixTime == null) return;
+    const fmt = () => {
+      const sec = Math.floor((Date.now() - lastFixTime) / 1000);
+      setLastFixLabel(sec < 60 ? `<1m ago` : `${Math.floor(sec / 60)}m ago`);
+    };
+    fmt();
+    const id = setInterval(fmt, 5000);
+    return () => clearInterval(id);
+  }, [lastFixTime]);
 
   const updateDotPosition = useCallback(async (feature?: { properties?: { heading?: number } }) => {
     if (feature?.properties?.heading !== undefined) {
@@ -321,6 +338,10 @@ export default function MapScreen() {
         />
       )}
 
+      <StyledText style={styles.lastFix}>
+        Last fix: {lastFixLabel}
+      </StyledText>
+
       <StyledText style={styles.attribution}>
         Tiles by OSM US © OpenStreetMap © OpenMapTiles
       </StyledText>
@@ -371,6 +392,13 @@ const styles = StyleSheet.create({
     height: DOT_SIZE,
     borderRadius: DOT_SIZE / 2,
     backgroundColor: "#ffffff",
+  },
+  lastFix: {
+    position: "absolute",
+    bottom: n(6),
+    left: n(4),
+    textAlign: "left",
+    fontSize: n(9),
   },
   attribution: {
     position: "absolute",
