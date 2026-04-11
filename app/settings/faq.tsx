@@ -17,6 +17,10 @@ const FAQS = [
     a: "These only appear at higher zoom levels. Zoom in closer to your area and they should appear. Check the Layers tab to make sure these layers are set to visible.",
   },
   {
+    q: "Can't see the route scrubber",
+    a: "Tap and hold the route icon on the main map tab to toggle the route scrubber.",
+  },
+  {
     q: "Colors are not working",
     a: "Your phone may be in grayscale mode. Change it in the Android layer accessibility settings. You can also enter the Album app in LightOS to disable grayscale, then use your keypress shortcut to switch to the Android layer.",
   }
