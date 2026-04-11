@@ -3,7 +3,7 @@ import Geolocation from "@react-native-community/geolocation";
 import CompassHeading from "react-native-compass-heading";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { Animated, PermissionsAndroid, StyleSheet, View } from "react-native";
+import { Animated, PanResponder, PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
 import { StyledText } from "@/components/StyledText";
@@ -21,6 +21,30 @@ const DOT_SIZE = 12;
 
 const CONE_HEIGHT = DOT_SIZE * 1.5;
 const CONE_HALF_WIDTH = DOT_SIZE / 2;
+const SCRUB_THUMB = 12;
+
+function interpolateRoute(coords: [number, number][], t: number): [number, number] {
+  if (t <= 0) return coords[0];
+  if (t >= 1) return coords[coords.length - 1];
+  const dists: number[] = [0];
+  for (let i = 1; i < coords.length; i++) {
+    const dx = coords[i][0] - coords[i - 1][0];
+    const dy = coords[i][1] - coords[i - 1][1];
+    dists.push(dists[i - 1] + Math.sqrt(dx * dx + dy * dy));
+  }
+  const total = dists[dists.length - 1];
+  const target = t * total;
+  for (let i = 1; i < dists.length; i++) {
+    if (dists[i] >= target) {
+      const seg = (target - dists[i - 1]) / (dists[i] - dists[i - 1]);
+      return [
+        coords[i - 1][0] + seg * (coords[i][0] - coords[i - 1][0]),
+        coords[i - 1][1] + seg * (coords[i][1] - coords[i - 1][1]),
+      ];
+    }
+  }
+  return coords[coords.length - 1];
+}
 
 export default function MapScreen() {
   const { layers } = useMapLayers();
@@ -45,6 +69,51 @@ export default function MapScreen() {
   const [bearing, setBearing] = useState(0);
   const [lastFixTime, setLastFixTime] = useState<number | null>(null);
   const [lastFixLabel, setLastFixLabel] = useState("∞");
+
+  const [scrubVisible, setScrubVisible] = useState(false);
+  const scrubVisibleRef = useRef(false);
+  scrubVisibleRef.current = scrubVisible;
+  const activeRouteRef = useRef(activeRoute);
+  activeRouteRef.current = activeRoute;
+
+  const [scrubPos, setScrubPos] = useState(0);
+  const scrubPosRef = useRef(0);
+  const scrubHeightRef = useRef(1);
+  const scrubStartPosRef = useRef(0);
+  const scrubBoundsCheckRef = useRef(0);
+  const scrubHandlerRef = useRef<(t: number) => void>(() => {});
+  scrubHandlerRef.current = (t: number) => {
+    scrubPosRef.current = t;
+    setScrubPos(t);
+    if (!activeRoute || !cameraRef.current || !mapRef.current) return;
+    const coord = interpolateRoute(activeRoute.geojson.geometry.coordinates, t);
+    const now = Date.now();
+    if (now - scrubBoundsCheckRef.current < 250) return;
+    scrubBoundsCheckRef.current = now;
+    mapRef.current.getVisibleBounds().then(([[maxLng, maxLat], [minLng, minLat]]) => {
+      if (!scrubVisibleRef.current) return;
+      if (coord[0] < minLng || coord[0] > maxLng || coord[1] < minLat || coord[1] > maxLat) {
+        setLocateMode(LocateMode.Free);
+        cameraRef.current?.flyTo(coord, 300);
+      }
+    });
+  };
+  const scrubPan = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => {
+      scrubStartPosRef.current = scrubPosRef.current;
+    },
+    onPanResponderMove: (_, gestureState) => {
+      const t = Math.max(0, Math.min(1, scrubStartPosRef.current - gestureState.dy / scrubHeightRef.current));
+      scrubHandlerRef.current(t);
+    },
+  })).current;
+
+  const scrubCoord = useMemo(() => {
+    if (!activeRoute || !scrubVisible) return null;
+    return interpolateRoute(activeRoute.geojson.geometry.coordinates, scrubPos);
+  }, [activeRoute, scrubPos, scrubVisible]);
 
   // initialize sensors + sensor callbacks for map
   useEffect(() => {
@@ -126,6 +195,8 @@ export default function MapScreen() {
   }, [updateDotPosition]);
 
   useEffect(() => {
+    setScrubPos(0);
+    setScrubVisible(false);
     if (!activeRoute || !cameraRef.current) return;
     cameraRef.current.fitBounds(
       [activeRoute.bounds[2], activeRoute.bounds[3]],
@@ -230,6 +301,10 @@ export default function MapScreen() {
     properties?: { isUserInteraction?: boolean; heading?: number; zoomLevel?: number };
   }) => {
     if (feature?.properties?.isUserInteraction && !suppressResetRef.current) {
+      if (scrubVisibleRef.current) {
+        scrubVisibleRef.current = false;
+        setScrubVisible(false);
+      }
       if (locateModeRef.current === LocateMode.Following) {
         const center = feature.geometry?.coordinates;
         const user = coordsRef.current;
@@ -348,6 +423,17 @@ export default function MapScreen() {
             </>
           );
         })()}
+        {scrubCoord && (
+          <MapLibreGL.ShapeSource
+            id="scrub-dot"
+            shape={{ type: "Feature", geometry: { type: "Point", coordinates: scrubCoord }, properties: {} }}
+          >
+            <MapLibreGL.CircleLayer
+              id="scrub-dot-circle"
+              style={{ circleRadius: 6, circleColor: invertColors ? "black" : "white", circleStrokeWidth: 2, circleStrokeColor: invertColors ? "white" : "black" }}
+            />
+          </MapLibreGL.ShapeSource>
+        )}
       </MapLibreGL.MapView>
 
       {dotScreenPos && hasHeading && (
@@ -386,9 +472,22 @@ export default function MapScreen() {
         Tiles by OSM US © OpenStreetMap © OpenMapTiles
       </StyledText>
 
+      {activeRoute && scrubVisible && (
+        <View
+          style={styles.scrubber}
+          onLayout={(e) => { scrubHeightRef.current = e.nativeEvent.layout.height; }}
+          {...scrubPan.panHandlers}
+        >
+          <View style={[styles.scrubberTrack, { backgroundColor: invertColors ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.2)" }]}>
+            <View style={[styles.scrubberFill, { height: `${scrubPos * 100}%`, backgroundColor: invertColors ? "black" : "white" }]} />
+          </View>
+          <View style={[styles.scrubberThumb, { top: (1 - scrubPos) * (scrubHeightRef.current - SCRUB_THUMB), backgroundColor: invertColors ? "black" : "white" }]} />
+        </View>
+      )}
+
       <View style={styles.buttonRow}>
         {activeRoute && (
-          <HapticPressable onPress={zoomToRoute}>
+          <HapticPressable onPress={zoomToRoute} onLongPress={() => setScrubVisible((v) => !v)}>
             <MaterialIcons name="route" size={n(48)} color={invertColors ? "black" : "white"} />
           </HapticPressable>
         )}
@@ -455,5 +554,31 @@ const styles = StyleSheet.create({
     gap: n(20),
     alignItems: "center",
     elevation: 10,
+  },
+  scrubber: {
+    position: "absolute",
+    right: n(4),
+    top: n(80),
+    bottom: n(100),
+    width: n(24),
+    alignItems: "center",
+  },
+  scrubberTrack: {
+    flex: 1,
+    width: 2,
+    borderRadius: 1,
+  },
+  scrubberFill: {
+    position: "absolute",
+    bottom: 0,
+    width: 2,
+    borderRadius: 1,
+  },
+  scrubberThumb: {
+    position: "absolute",
+    width: SCRUB_THUMB,
+    height: SCRUB_THUMB,
+    borderRadius: SCRUB_THUMB / 2,
+    left: (n(24) - SCRUB_THUMB) / 2,
   },
 });
