@@ -55,8 +55,9 @@ export function Navbar({
               tab.screenName === currentScreenName,
               invertColors
             )}
+            hitSlop={{ left: 50, right: 50 }}
             name={tab.iconName}
-            size={n(48)}
+            size={n(35)}
           />
         </HapticPressable>
       ))}
