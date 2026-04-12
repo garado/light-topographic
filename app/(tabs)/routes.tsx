@@ -1,3 +1,8 @@
+/**
+ * @file routes.tsx
+ * @description GPX route management.
+ */
+
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";

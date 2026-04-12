@@ -1,9 +1,12 @@
+/**
+ * @file index.tsx
+ * @description The main map view.
+ */
+
 import MapLibreGL from "@maplibre/maplibre-react-native";
-import Geolocation from "@react-native-community/geolocation";
-import CompassHeading from "react-native-compass-heading";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
-import { Animated, PanResponder, PermissionsAndroid, StyleSheet, View } from "react-native";
+import { Animated, PermissionsAndroid, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
 import { StyledText } from "@/components/StyledText";
@@ -16,71 +19,19 @@ import { useRoutes } from "@/contexts/RoutesContext";
 import { useUnits } from "@/contexts/UnitsContext";
 import { mapFocusState } from "@/utils/mapFocusState";
 import { newMarkerState } from "@/utils/newMarkerState";
+import { scaleBarInfo } from "@/utils/geo";
 import { useColor } from "@/hooks/useColor";
 import { useLocationMode } from "@/contexts/LocationModeContext";
+import { useLocation } from "@/hooks/useLocation";
+import { useCompass } from "@/hooks/useCompass";
+import { useRouteScrubber } from "@/hooks/useRouteScrubber";
+import { RouteScrubberView } from "@/components/RouteScrubberView";
+import { CompassMode, LocateMode } from "@/utils/mapModes";
 MapLibreGL.setAccessToken("pk.placeholder");
 
-enum LocateMode { Free, Centered, Following }
-enum CompassMode { Free, North, Heading }
-
 const DOT_SIZE = 12;
-
 const CONE_HEIGHT = DOT_SIZE * 1.5;
 const CONE_HALF_WIDTH = DOT_SIZE / 2;
-const SCRUB_THUMB = 12;
-
-function routeTotalMiles(coords: [number, number][]): number {
-  const R = 3958.8;
-  let total = 0;
-  for (let i = 1; i < coords.length; i++) {
-    const [lon1, lat1] = coords[i - 1];
-    const [lon2, lat2] = coords[i];
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-    total += R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
-  return total;
-}
-
-function scaleBarInfo(zoom: number, lat: number, units: "imperial" | "metric"): { widthPx: number; label: string } {
-  const metersPerPx = (156543.03392 * Math.cos(lat * Math.PI / 180)) / Math.pow(2, zoom);
-  const targetMeters = 80 * metersPerPx;
-  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
-  const nice = steps.find((s) => s >= targetMeters) ?? steps[steps.length - 1];
-  const widthPx = nice / metersPerPx;
-  let label: string;
-  if (units === "imperial") {
-    const feet = nice * 3.28084;
-    label = feet < 528 ? `${Math.round(feet)} ft` : `${(feet / 5280).toFixed(1)} mi`;
-  } else {
-    label = nice < 1000 ? `${nice} m` : `${(nice / 1000).toFixed(nice < 10000 ? 1 : 0)} km`;
-  }
-  return { widthPx, label };
-}
-
-function interpolateRoute(coords: [number, number][], t: number): [number, number] {
-  if (t <= 0) return coords[0];
-  if (t >= 1) return coords[coords.length - 1];
-  const dists: number[] = [0];
-  for (let i = 1; i < coords.length; i++) {
-    const dx = coords[i][0] - coords[i - 1][0];
-    const dy = coords[i][1] - coords[i - 1][1];
-    dists.push(dists[i - 1] + Math.sqrt(dx * dx + dy * dy));
-  }
-  const total = dists[dists.length - 1];
-  const target = t * total;
-  for (let i = 1; i < dists.length; i++) {
-    if (dists[i] >= target) {
-      const seg = (target - dists[i - 1]) / (dists[i] - dists[i - 1]);
-      return [
-        coords[i - 1][0] + seg * (coords[i][0] - coords[i - 1][0]),
-        coords[i - 1][1] + seg * (coords[i][1] - coords[i - 1][1]),
-      ];
-    }
-  }
-  return coords[coords.length - 1];
-}
 
 export default function MapScreen() {
   useColor();
@@ -94,76 +45,37 @@ export default function MapScreen() {
 
   const mapRef = useRef<MapLibreGL.MapView>(null);
   const cameraRef = useRef<MapLibreGL.Camera>(null);
-  const watchIdRef = useRef<number | null>(null);
-
-  // Heading tracked as refs to avoid re-renders; Animated.Value drives the cone
-  const userHeadingRef = useRef<number | null>(null);
   const bearingRef = useRef(0);
   const coordsRef = useRef<[number, number] | null>(null);
-  const coneRotationAnim = useRef(new Animated.Value(0)).current;
-  const [hasHeading, setHasHeading] = useState(false);
-
+  const suppressResetRef = useRef(false);
+  const [zoom, setZoom] = useState(13);
   const markersRef = useRef(markers);
   markersRef.current = markers;
-
-  const [coords, setCoords] = useState<[number, number] | null>(null);
-  const [initialCoords, setInitialCoords] = useState<[number, number] | null>(null);
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [markerScreenPositions, setMarkerScreenPositions] = useState<Record<string, { x: number; y: number }>>({});
-  const [bearing, setBearing] = useState(0);
-  const [zoom, setZoom] = useState(13);
-  const [lastFixTime, setLastFixTime] = useState<number | null>(null);
-  const [lastFixLabel, setLastFixLabel] = useState("∞");
 
-  const [scrubVisible, setScrubVisible] = useState(false);
-  const scrubVisibleRef = useRef(false);
-  scrubVisibleRef.current = scrubVisible;
-  const activeRouteRef = useRef(activeRoute);
-  activeRouteRef.current = activeRoute;
+  useEffect(() => { MapLibreGL.offlineManager.setTileCountLimit(5000); }, []);
 
-  const [scrubPos, setScrubPos] = useState(0);
-  const scrubPosRef = useRef(0);
-  const scrubHeightRef = useRef(1);
-  const scrubStartPosRef = useRef(0);
-  const scrubBoundsCheckRef = useRef(0);
-  const scrubHandlerRef = useRef<(t: number) => void>(() => { });
-  scrubHandlerRef.current = (t: number) => {
-    scrubPosRef.current = t;
-    setScrubPos(t);
-    if (!activeRoute || !cameraRef.current || !mapRef.current) return;
-    const coord = interpolateRoute(activeRoute.geojson.geometry.coordinates, t);
-    const now = Date.now();
-    if (now - scrubBoundsCheckRef.current < 250) return;
-    scrubBoundsCheckRef.current = now;
-    mapRef.current.getVisibleBounds().then(([[maxLng, maxLat], [minLng, minLat]]) => {
-      if (!scrubVisibleRef.current) return;
-      if (coord[0] < minLng || coord[0] > maxLng || coord[1] < minLat || coord[1] > maxLat) {
-        setLocateMode(LocateMode.Free);
-        cameraRef.current?.flyTo(coord, 300);
-      }
-    });
-  };
-  const scrubPan = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: () => {
-      scrubStartPosRef.current = scrubPosRef.current;
-    },
-    onPanResponderMove: (_, gestureState) => {
-      const t = Math.max(0, Math.min(1, scrubStartPosRef.current - gestureState.dy / scrubHeightRef.current));
-      scrubHandlerRef.current(t);
-    },
-  })).current;
+  const moveCamera = useCallback((fn: () => void, duration: number) => {
+    suppressResetRef.current = true;
+    fn();
+    setTimeout(() => { suppressResetRef.current = false; }, duration + 100);
+  }, []);
 
-  const scrubCoord = useMemo(() => {
-    if (!activeRoute || !scrubVisible) return null;
-    return interpolateRoute(activeRoute.geojson.geometry.coordinates, scrubPos);
-  }, [activeRoute, scrubPos, scrubVisible]);
+  const {
+    coords, initialCoords, lastFixLabel, locateFollowing,
+    locateModeRef, lockBearingRef, setLocateMode, jumpToLocation,
+  } = useLocation({ locationMode, cameraRef, coordsRef, bearingRef, moveCamera });
 
-  const routeMiles = useMemo(() => {
-    if (!activeRoute) return 0;
-    return routeTotalMiles(activeRoute.geojson.geometry.coordinates);
-  }, [activeRoute]);
+  const {
+    hasHeading, bearing, setBearing, compassMode, compassModeRef,
+    userHeadingRef, coneRotationAnim, setCompassMode, cycleCompassMode,
+  } = useCompass({ cameraRef, coordsRef, bearingRef, suppressResetRef, moveCamera, setLocateMode });
+
+  const {
+    scrubVisible, setScrubVisible, scrubVisibleRef, scrubPos,
+    scrubCoord, routeMiles, scrubHeightRef, scrubPan, zoomToRoute,
+  } = useRouteScrubber({ activeRoute, cameraRef, mapRef, setLocateMode, setCompassMode, compassModeRef, moveCamera });
 
   useFocusEffect(useCallback(() => {
     if (mapFocusState.flyTo && cameraRef.current) {
@@ -171,77 +83,7 @@ export default function MapScreen() {
       cameraRef.current.flyTo(mapFocusState.flyTo, 400);
       mapFocusState.flyTo = null;
     }
-  }, []));
-
-  // initialize compass + tile limit once on mount
-  useEffect(() => {
-    MapLibreGL.offlineManager.setTileCountLimit(5000);
-
-    CompassHeading.start(1, ({ heading }: { heading: number }) => {
-      userHeadingRef.current = heading;
-      coneRotationAnim.setValue(heading - bearingRef.current);
-      if (!hasHeading) setHasHeading(true);
-
-      if (compassModeRef.current === CompassMode.Heading && cameraRef.current) {
-        suppressResetRef.current = true;
-        cameraRef.current.setCamera({
-          centerCoordinate: coordsRef.current ?? undefined,
-          heading,
-          animationDuration: 150,
-          animationMode: "easeTo",
-        });
-        setTimeout(() => { suppressResetRef.current = false; }, 250);
-        bearingRef.current = heading;
-        coneRotationAnim.setValue(0);
-      }
-    });
-
-    return () => { CompassHeading.stop(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // start/stop watchPosition based on location mode
-  useEffect(() => {
-    if (locationMode !== "polling") return;
-
-    let watchId: number | null = null;
-    (async () => {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
-
-      watchId = Geolocation.watchPosition(
-        (pos) => {
-          const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
-          setCoords(c);
-          setLastFixTime(Date.now());
-          coordsRef.current = c;
-          setInitialCoords((prev) => prev ?? c);
-        },
-        (err) => console.error("Location error:", err),
-        { enableHighAccuracy: true, distanceFilter: 0 },
-      );
-      watchIdRef.current = watchId;
-    })();
-
-    return () => {
-      if (watchId != null) Geolocation.clearWatch(watchId);
-      watchIdRef.current = null;
-    };
-  }, [locationMode]);
-
-  // periodically update last fix time
-  useEffect(() => {
-    if (lastFixTime == null) return;
-    const fmt = () => {
-      const sec = Math.floor((Date.now() - lastFixTime) / 1000);
-      setLastFixLabel(sec < 60 ? `<1m ago` : `${Math.floor(sec / 60)}m ago`);
-    };
-    fmt();
-    const id = setInterval(fmt, 5000);
-    return () => clearInterval(id);
-  }, [lastFixTime]);
+  }, [setLocateMode]));
 
   const updateDotPosition = useCallback(async (feature?: { properties?: { heading?: number; zoomLevel?: number } }) => {
     if (feature?.properties?.heading !== undefined) {
@@ -251,9 +93,7 @@ export default function MapScreen() {
         coneRotationAnim.setValue(userHeadingRef.current - feature.properties.heading);
       }
     }
-    if (feature?.properties?.zoomLevel !== undefined) {
-      setZoom(feature.properties.zoomLevel);
-    }
+    if (feature?.properties?.zoomLevel !== undefined) setZoom(feature.properties.zoomLevel);
     if (!mapRef.current) return;
     if (coords) {
       const point = await mapRef.current.getPointInView(coords);
@@ -271,131 +111,9 @@ export default function MapScreen() {
     } else {
       setMarkerScreenPositions({});
     }
-  }, [coords, coneRotationAnim]);
+  }, [coords, setBearing, userHeadingRef, coneRotationAnim]);
 
-  useEffect(() => {
-    updateDotPosition();
-  }, [updateDotPosition]);
-
-  useEffect(() => {
-    setScrubPos(0);
-    setScrubVisible(false);
-    if (!activeRoute || !cameraRef.current) return;
-    cameraRef.current.fitBounds(
-      [activeRoute.bounds[2], activeRoute.bounds[3]],
-      [activeRoute.bounds[0], activeRoute.bounds[1]],
-      50,
-      600,
-    );
-  }, [activeRoute]);
-
-  const zoomToRoute = useCallback(() => {
-    if (!activeRoute || !cameraRef.current) return;
-    setLocateMode(LocateMode.Free);
-    if (compassModeRef.current === CompassMode.Heading) setCompassMode(CompassMode.Free);
-    moveCamera(() => cameraRef.current!.fitBounds(
-      [activeRoute.bounds[2], activeRoute.bounds[3]],
-      [activeRoute.bounds[0], activeRoute.bounds[1]],
-      50,
-      600,
-    ), 600);
-  }, [activeRoute, setLocateMode, setCompassMode, moveCamera]);
-
-  const suppressResetRef = useRef(false);
-
-  const moveCamera = useCallback((fn: () => void, duration: number) => {
-    suppressResetRef.current = true;
-    fn();
-    setTimeout(() => { suppressResetRef.current = false; }, duration + 100);
-  }, []);
-
-  // --- Compass mode ---
-  const compassModeRef = useRef(CompassMode.Free);
-  const [compassMode, setCompassModeState] = useState(CompassMode.Free);
-
-  const setCompassMode = useCallback((mode: CompassMode) => {
-    compassModeRef.current = mode;
-    setCompassModeState(mode);
-    if (mode === CompassMode.North) {
-      moveCamera(() => cameraRef.current?.setCamera({ heading: 0, animationDuration: 400, animationMode: "easeTo" }), 400);
-      bearingRef.current = 0;
-      setBearing(0);
-      if (userHeadingRef.current !== null) coneRotationAnim.setValue(userHeadingRef.current);
-    } else if (mode === CompassMode.Heading) {
-      setLocateMode(LocateMode.Following);
-      if (userHeadingRef.current !== null && cameraRef.current) {
-        const heading = userHeadingRef.current;
-        suppressResetRef.current = true;
-        cameraRef.current.setCamera({
-          centerCoordinate: coordsRef.current ?? undefined,
-          heading,
-          animationDuration: 150,
-          animationMode: "easeTo",
-        });
-        setTimeout(() => { suppressResetRef.current = false; }, 250);
-        bearingRef.current = heading;
-        coneRotationAnim.setValue(0);
-      }
-    }
-  }, [moveCamera, coneRotationAnim, setLocateMode]);
-
-  const cycleCompassMode = useCallback(() => {
-    setCompassMode((compassModeRef.current + 1) % 3 as CompassMode);
-  }, [setCompassMode]);
-
-  // --- Locate mode ---
-  const locateModeRef = useRef(LocateMode.Free);
-  const [locateFollowing, setLocateFollowing] = useState(false);
-  const lockBearingRef = useRef(0);
-
-  const setLocateMode = useCallback((mode: LocateMode) => {
-    locateModeRef.current = mode;
-    setLocateFollowing(mode === LocateMode.Following);
-    if (mode === LocateMode.Following) lockBearingRef.current = bearingRef.current;
-  }, []);
-
-  // Follow user position when locked
-  useEffect(() => {
-    if (!locateFollowing || !cameraRef.current || !coords) return;
-    moveCamera(() => {
-      cameraRef.current!.setCamera({ centerCoordinate: coords, animationDuration: 100, animationMode: "moveTo" });
-    }, 100);
-  }, [coords, locateFollowing, moveCamera]);
-
-  const jumpToLocation = useCallback(() => {
-    if (!cameraRef.current) return;
-
-    if (locationMode === "on-demand") {
-      Geolocation.getCurrentPosition(
-        (pos) => {
-          const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
-          setCoords(c);
-          setLastFixTime(Date.now());
-          coordsRef.current = c;
-          setInitialCoords((prev) => prev ?? c);
-          cameraRef.current?.flyTo(c, 400);
-        },
-        (err) => console.error("Location error:", err),
-        { enableHighAccuracy: true, timeout: 10000 },
-      );
-      return;
-    }
-
-    if (!coords) return;
-    switch (locateModeRef.current) {
-      case LocateMode.Free:
-        moveCamera(() => cameraRef.current!.flyTo(coords, 400), 400);
-        setLocateMode(LocateMode.Centered);
-        break;
-      case LocateMode.Centered:
-        moveCamera(() => cameraRef.current!.setCamera({ centerCoordinate: coords, zoomLevel: 16, animationDuration: 400, animationMode: "flyTo" }), 400);
-        setLocateMode(LocateMode.Following);
-        break;
-      case LocateMode.Following:
-        setLocateMode(LocateMode.Free);
-        break;
-    }
-  }, [coords, setLocateMode, moveCamera, locationMode]);
+  useEffect(() => { updateDotPosition(); }, [updateDotPosition]);
 
   const onRegionChanging = useCallback((feature?: {
     geometry?: { coordinates?: [number, number] };
@@ -412,13 +130,11 @@ export default function MapScreen() {
         const currentBearing = feature.properties?.heading ?? bearingRef.current;
         const zoomLevel = feature.properties?.zoomLevel ?? 16;
 
-        // Pan: any movement exits immediately
         if (center && user) {
           const dist = Math.abs(center[0] - user[0]) + Math.abs(center[1] - user[1]);
           if (dist > 0.0001) { setLocateMode(LocateMode.Free); return; }
         }
 
-        // Rotate: snap back until threshold, then exit
         let bearingDiff = Math.abs(currentBearing - lockBearingRef.current);
         if (bearingDiff > 180) bearingDiff = 360 - bearingDiff;
         if (bearingDiff > 50) {
@@ -429,9 +145,7 @@ export default function MapScreen() {
           setTimeout(() => { suppressResetRef.current = false; }, 50);
         }
 
-        // Zoom out past a threshold exits
         if (zoomLevel < 12) { setLocateMode(LocateMode.Free); return; }
-
       } else if (locateModeRef.current > LocateMode.Free) {
         setLocateMode(LocateMode.Free);
       }
@@ -440,18 +154,17 @@ export default function MapScreen() {
       }
     }
     updateDotPosition(feature);
-  }, [updateDotPosition, setLocateMode, setCompassMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateDotPosition, setLocateMode, setCompassMode, setScrubVisible]);
 
   const coneRotateStyle = {
-    transform: [
-      {
-        rotate: coneRotationAnim.interpolate({
-          inputRange: [-720, 720],
-          outputRange: ["-720deg", "720deg"],
-          extrapolate: "extend",
-        }),
-      },
-    ],
+    transform: [{
+      rotate: coneRotationAnim.interpolate({
+        inputRange: [-720, 720],
+        outputRange: ["-720deg", "720deg"],
+        extrapolate: "extend",
+      }),
+    }],
   };
 
   return (
@@ -547,16 +260,12 @@ export default function MapScreen() {
         <Animated.View
           style={[
             styles.coneContainer,
-            {
-              left: dotScreenPos.x - CONE_HALF_WIDTH,
-              top: dotScreenPos.y - CONE_HEIGHT,
-            },
+            { left: dotScreenPos.x - CONE_HALF_WIDTH, top: dotScreenPos.y - CONE_HEIGHT },
             coneRotateStyle,
           ]}
           pointerEvents="none"
         >
           <View style={[styles.cone, { borderBottomColor: invertColors ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.25)" }]} />
-          {/* bottom half is empty — exists so container center aligns with dot */}
         </Animated.View>
       )}
 
@@ -594,29 +303,17 @@ export default function MapScreen() {
         );
       })()}
 
-      <StyledText style={styles.lastFix}>
-        Last fix: {lastFixLabel}
-      </StyledText>
+      <StyledText style={styles.lastFix}>Last fix: {lastFixLabel}</StyledText>
 
       {activeRoute && scrubVisible && (
-        <StyledText style={styles.scrubberLabel}>
-          {units === "imperial"
-            ? `${(routeMiles * (1 - scrubPos)).toFixed(1)} mi`
-            : `${(routeMiles * 1.60934 * (1 - scrubPos)).toFixed(1)} km`} remaining
-        </StyledText>
-      )}
-
-      {activeRoute && scrubVisible && (
-        <View
-          style={styles.scrubber}
-          onLayout={(e) => { scrubHeightRef.current = e.nativeEvent.layout.height; }}
-          {...scrubPan.panHandlers}
-        >
-          <View style={[styles.scrubberTrack, { backgroundColor: invertColors ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.2)" }]}>
-            <View style={[styles.scrubberFill, { height: `${scrubPos * 100}%`, backgroundColor: invertColors ? "black" : "white" }]} />
-          </View>
-          <View style={[styles.scrubberThumb, { top: (1 - scrubPos) * (scrubHeightRef.current - SCRUB_THUMB), backgroundColor: invertColors ? "black" : "white" }]} />
-        </View>
+        <RouteScrubberView
+          scrubPos={scrubPos}
+          scrubHeightRef={scrubHeightRef}
+          scrubPan={scrubPan}
+          routeMiles={routeMiles}
+          units={units}
+          invertColors={invertColors}
+        />
       )}
 
       <View style={styles.buttonRow}>
@@ -649,7 +346,7 @@ const styles = StyleSheet.create({
   coneContainer: {
     position: "absolute",
     width: CONE_HALF_WIDTH * 2,
-    height: CONE_HEIGHT * 2,  // double height: center = dot, cone in top half
+    height: CONE_HEIGHT * 2,
     alignItems: "center",
     justifyContent: "flex-start",
   },
@@ -703,38 +400,5 @@ const styles = StyleSheet.create({
     gap: n(20),
     alignItems: "center",
     elevation: 10,
-  },
-  scrubberLabel: {
-    position: "absolute",
-    left: n(4),
-    bottom: n(20),
-    fontSize: n(16),
-    textAlign: "right",
-  },
-  scrubber: {
-    position: "absolute",
-    right: n(4),
-    top: n(80),
-    bottom: n(100),
-    width: n(24),
-    alignItems: "center",
-  },
-  scrubberTrack: {
-    flex: 1,
-    width: 2,
-    borderRadius: 1,
-  },
-  scrubberFill: {
-    position: "absolute",
-    bottom: 0,
-    width: 2,
-    borderRadius: 1,
-  },
-  scrubberThumb: {
-    position: "absolute",
-    width: SCRUB_THUMB,
-    height: SCRUB_THUMB,
-    borderRadius: SCRUB_THUMB / 2,
-    left: (n(24) - SCRUB_THUMB) / 2,
   },
 });

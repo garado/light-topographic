@@ -1,3 +1,8 @@
+/**
+ * @file layers.tsx
+ * @description Layer preset management.
+ */
+
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";

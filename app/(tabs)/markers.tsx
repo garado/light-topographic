@@ -1,3 +1,8 @@
+/**
+ * @file markers.tsx
+ * @description Map marker management.
+ */
+
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";

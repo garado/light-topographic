@@ -1,3 +1,8 @@
+/**
+ * @file settings.tsx
+ * @description Application settings.
+ */
+
 import * as Application from "expo-application";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";

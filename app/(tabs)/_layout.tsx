@@ -1,3 +1,8 @@
+/**
+ * @file _layout.tsx
+ * @description Handles routing.
+ */
+
 import { Tabs } from "expo-router";
 import { Navbar, type TabConfigItem } from "@/components/Navbar";
 
