@@ -372,11 +372,11 @@ const styles = StyleSheet.create({
   },
   scaleBar: {
     position: "absolute",
-    top: n(20),
-    left: n(4),
+    top: n(6),
+    left: n(6),
   },
   scaleBarLabel: {
-    fontSize: n(9),
+    fontSize: n(12),
     textAlign: "left",
   },
   scaleBarLine: {
