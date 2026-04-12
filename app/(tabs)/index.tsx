@@ -16,6 +16,7 @@ import { useRoutes } from "@/contexts/RoutesContext";
 import { useUnits } from "@/contexts/UnitsContext";
 import { mapFocusState } from "@/utils/mapFocusState";
 import { newMarkerState } from "@/utils/newMarkerState";
+import { useColor } from "@/hooks/useColor";
 MapLibreGL.setAccessToken("pk.placeholder");
 
 enum LocateMode { Free, Centered, Following }
@@ -81,6 +82,7 @@ function interpolateRoute(coords: [number, number][], t: number): [number, numbe
 }
 
 export default function MapScreen() {
+  useColor();
   const { layers } = useMapLayers();
   const { invertColors } = useInvertColors();
   const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors), [layers, invertColors]);

@@ -6,6 +6,7 @@ import ContentContainer from "@/components/ContentContainer";
 import { SelectorButton } from "@/components/SelectorButton";
 import { StyledButton } from "@/components/StyledButton";
 import { usePersistedState } from "@/hooks/usePersistedState";
+import { useColor } from "@/hooks/useColor";
 import { confirmState } from "@/utils/confirmState";
 import { tileCacheSizeState } from "@/utils/tileCacheSizeState";
 
@@ -53,7 +54,7 @@ export default function MapTileCacheScreen() {
       <SelectorButton
         label="Current Cache Size"
         value={cacheUsed}
-        onPress={() => {}}
+        onPress={() => { }}
       />
       <StyledButton
         onPress={() => router.push("/settings/cached-tiles")}

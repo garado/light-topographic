@@ -15,8 +15,11 @@ import { type MapLayers, useMapLayers } from "@/contexts/MapLayersContext";
 import { useRoutes } from "@/contexts/RoutesContext";
 import { buildMapStyle } from "@/utils/mapStyle";
 import { n } from "@/utils/scaling";
+import { useColor } from "@/hooks/useColor";
 
 export default function CachedTilesScreen() {
+  useColor();
+
   const { invertColors } = useInvertColors();
   const { layers, setAllLayers } = useMapLayers();
   const { activeRoute } = useRoutes();
@@ -24,6 +27,7 @@ export default function CachedTilesScreen() {
   const snapshot = useRef<MapLayers | null>(null);
   const MAP_STYLE = useMemo(() => buildMapStyle(layers), [layers]);
   const [coords, setCoords] = useState<[number, number] | null>(null);
+
   useFocusEffect(
     useCallback(() => {
       snapshot.current = layers;
@@ -34,14 +38,14 @@ export default function CachedTilesScreen() {
       MLRNModule.setConnected(false);
       Geolocation.getCurrentPosition(
         (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
-        () => {},
+        () => { },
         { enableHighAccuracy: true, timeout: 5000 },
       );
       return () => {
         MLRNModule.setConnected(true);
         if (snapshot.current) setAllLayers(snapshot.current);
       };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 
