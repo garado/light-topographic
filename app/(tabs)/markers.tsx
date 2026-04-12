@@ -161,7 +161,6 @@ const styles = StyleSheet.create({
   },
   coords: {
     fontSize: n(12),
-    opacity: 0.5,
   },
   deleteBtn: {
     paddingTop: n(8),
