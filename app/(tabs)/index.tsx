@@ -570,10 +570,6 @@ export default function MapScreen() {
         Last fix: {lastFixLabel}
       </StyledText>
 
-      <StyledText style={styles.attribution}>
-        Tiles by OSM US © OpenStreetMap © OpenMapTiles
-      </StyledText>
-
       {activeRoute && scrubVisible && (
         <StyledText style={styles.scrubberLabel}>
           {units === "imperial"
@@ -667,17 +663,10 @@ const styles = StyleSheet.create({
     textAlign: "left",
     fontSize: n(9),
   },
-  attribution: {
-    position: "absolute",
-    bottom: n(6),
-    right: n(4),
-    textAlign: "right",
-    fontSize: n(9),
-  },
   buttonRow: {
     position: "absolute",
-    bottom: n(20),
-    right: n(20),
+    bottom: n(6),
+    right: n(6),
     flexDirection: "row",
     gap: n(20),
     alignItems: "center",
