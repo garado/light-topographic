@@ -49,7 +49,7 @@ export default function MapTileCacheScreen() {
       <SelectorButton
         label="Maximum Cache Size"
         value={`${cacheMb} MB`}
-        href={{ pathname: "/settings/tile-cache-size", params: { currentMb: cacheMb } }}
+        href={{ pathname: "/settings/cache/edit-cache-size", params: { currentMb: cacheMb } }}
       />
       <SelectorButton
         label="Current Cache Size"
@@ -57,7 +57,7 @@ export default function MapTileCacheScreen() {
         onPress={() => { }}
       />
       <StyledButton
-        onPress={() => router.push("/settings/cached-tiles")}
+        onPress={() => router.push("/settings/cache/view-cached-tiles")}
         text="View Cached Tiles"
       />
       <StyledButton
@@ -68,7 +68,7 @@ export default function MapTileCacheScreen() {
             message: "This will delete all cached map tiles. You will need to redownload them over a network connection.\n\nThis is not recommended if you are out and have no cell service.",
             confirmText: "Clear",
             action: "clearCache",
-            returnPath: "/settings/map-tile-cache",
+            returnPath: "/settings/cache/map-tile-cache",
           },
         })}
         text="Clear Cache"

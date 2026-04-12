@@ -46,8 +46,7 @@ export default function CachedTilesScreen() {
         if (snapshot.current) setAllLayers(snapshot.current);
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []),
-  );
+    }, []),);
 
   return (
     <View style={[styles.screen, { backgroundColor: invertColors ? "white" : "black" }]}>

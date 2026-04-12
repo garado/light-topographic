@@ -3,10 +3,8 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View, Linking, PermissionsAndroid } from "react-native";
 import ContentContainer from "@/components/ContentContainer";
-import { HapticPressable } from "@/components/HapticPressable";
 import { SelectorButton } from "@/components/SelectorButton";
 import { StyledButton } from "@/components/StyledButton";
-import { StyledText } from "@/components/StyledText";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useLayerPresets } from "@/contexts/LayerPresetsContext";
@@ -75,7 +73,7 @@ export default function SettingsScreen() {
           value={units === "imperial" ? "Imperial" : "Metric"}
           onPress={() => setUnits(units === "imperial" ? "metric" : "imperial")}
         />
-        <StyledButton onPress={() => router.push("/settings/map-tile-cache")} text="Map Tile Cache" />
+        <StyledButton onPress={() => router.push("/settings/cache/cache-settings")} text="Map Tile Cache" />
         <StyledButton
           onPress={() => router.push({
             pathname: "/confirm",
