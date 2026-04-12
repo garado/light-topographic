@@ -17,6 +17,7 @@ import { useUnits } from "@/contexts/UnitsContext";
 import { mapFocusState } from "@/utils/mapFocusState";
 import { newMarkerState } from "@/utils/newMarkerState";
 import { useColor } from "@/hooks/useColor";
+import { useLocationMode } from "@/contexts/LocationModeContext";
 MapLibreGL.setAccessToken("pk.placeholder");
 
 enum LocateMode { Free, Centered, Following }
@@ -85,6 +86,7 @@ export default function MapScreen() {
   useColor();
   const { layers } = useMapLayers();
   const { invertColors } = useInvertColors();
+  const { locationMode } = useLocationMode();
   const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors), [layers, invertColors]);
   const { activeRoute } = useRoutes();
   const { units } = useUnits();
@@ -171,27 +173,9 @@ export default function MapScreen() {
     }
   }, []));
 
-  // initialize sensors + sensor callbacks for map
+  // initialize compass + tile limit once on mount
   useEffect(() => {
     MapLibreGL.offlineManager.setTileCountLimit(5000);
-    (async () => {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
-
-      watchIdRef.current = Geolocation.watchPosition(
-        (pos) => {
-          const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
-          setCoords(c);
-          setLastFixTime(Date.now());
-          coordsRef.current = c;
-          setInitialCoords((prev) => prev ?? c);
-        },
-        (err) => console.error("Location error:", err),
-        { enableHighAccuracy: true, distanceFilter: 0 },
-      );
-    })();
 
     CompassHeading.start(1, ({ heading }: { heading: number }) => {
       userHeadingRef.current = heading;
@@ -212,14 +196,40 @@ export default function MapScreen() {
       }
     });
 
-    return () => {
-      if (watchIdRef.current != null) {
-        Geolocation.clearWatch(watchIdRef.current);
-      }
-      CompassHeading.stop();
-    };
+    return () => { CompassHeading.stop(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // start/stop watchPosition based on location mode
+  useEffect(() => {
+    if (locationMode !== "polling") return;
+
+    let watchId: number | null = null;
+    (async () => {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      );
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
+
+      watchId = Geolocation.watchPosition(
+        (pos) => {
+          const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
+          setCoords(c);
+          setLastFixTime(Date.now());
+          coordsRef.current = c;
+          setInitialCoords((prev) => prev ?? c);
+        },
+        (err) => console.error("Location error:", err),
+        { enableHighAccuracy: true, distanceFilter: 0 },
+      );
+      watchIdRef.current = watchId;
+    })();
+
+    return () => {
+      if (watchId != null) Geolocation.clearWatch(watchId);
+      watchIdRef.current = null;
+    };
+  }, [locationMode]);
 
   // periodically update last fix time
   useEffect(() => {
@@ -353,7 +363,25 @@ export default function MapScreen() {
   }, [coords, locateFollowing, moveCamera]);
 
   const jumpToLocation = useCallback(() => {
-    if (!cameraRef.current || !coords) return;
+    if (!cameraRef.current) return;
+
+    if (locationMode === "on-demand") {
+      Geolocation.getCurrentPosition(
+        (pos) => {
+          const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
+          setCoords(c);
+          setLastFixTime(Date.now());
+          coordsRef.current = c;
+          setInitialCoords((prev) => prev ?? c);
+          cameraRef.current?.flyTo(c, 400);
+        },
+        (err) => console.error("Location error:", err),
+        { enableHighAccuracy: true, timeout: 10000 },
+      );
+      return;
+    }
+
+    if (!coords) return;
     switch (locateModeRef.current) {
       case LocateMode.Free:
         moveCamera(() => cameraRef.current!.flyTo(coords, 400), 400);
@@ -367,7 +395,7 @@ export default function MapScreen() {
         setLocateMode(LocateMode.Free);
         break;
     }
-  }, [coords, setLocateMode, moveCamera]);
+  }, [coords, setLocateMode, moveCamera, locationMode]);
 
   const onRegionChanging = useCallback((feature?: {
     geometry?: { coordinates?: [number, number] };
@@ -606,7 +634,11 @@ export default function MapScreen() {
           />
         </HapticPressable>
         <HapticPressable onPress={jumpToLocation}>
-          <MaterialIcons name={locateFollowing ? "gps-fixed" : "gps-not-fixed"} size={n(48)} color={invertColors ? "black" : "white"} />
+          <MaterialIcons
+            name={locationMode === "on-demand" ? "gps-not-fixed" : (locateFollowing ? "gps-fixed" : "gps-not-fixed")}
+            size={n(48)}
+            color={invertColors ? "black" : "white"}
+          />
         </HapticPressable>
       </View>
     </View>
@@ -661,7 +693,7 @@ const styles = StyleSheet.create({
     bottom: n(6),
     left: n(4),
     textAlign: "left",
-    fontSize: n(9),
+    fontSize: n(12),
   },
   buttonRow: {
     position: "absolute",

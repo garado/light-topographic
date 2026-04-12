@@ -9,6 +9,7 @@ import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useLayerPresets } from "@/contexts/LayerPresetsContext";
 import { useUnits } from "@/contexts/UnitsContext";
+import { useLocationMode } from "@/contexts/LocationModeContext";
 import { confirmState } from "@/utils/confirmState";
 import { n } from "@/utils/scaling";
 
@@ -21,6 +22,7 @@ export default function SettingsScreen() {
   const { resetToDefaults } = useLayerPresets();
   const { invertColors, setInvertColors } = useInvertColors();
   const { units, setUnits } = useUnits();
+  const { locationMode } = useLocationMode();
 
   useFocusEffect(
     useCallback(() => {
@@ -66,6 +68,11 @@ export default function SettingsScreen() {
           label="Location Permissions"
           value={locationPermission}
           onPress={handleLocationPermission}
+        />
+        <SelectorButton
+          label="Location Mode"
+          value={locationMode === "polling" ? "Polling" : "On-demand"}
+          href="/settings/location-mode"
         />
         <ToggleSwitch label="Invert Colors" style={styles.invert} value={invertColors} onValueChange={setInvertColors} />
         <SelectorButton
