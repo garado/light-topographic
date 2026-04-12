@@ -1,4 +1,8 @@
 import type { MapLayers } from "@/contexts/MapLayersContext";
+import { darkMatter } from "./mapStyle/darkMatter";
+import { positron } from "./mapStyle/positron";
+import { coloredDark, coloredLight } from "./mapStyle/colored";
+import type { Palette } from "./mapStyle/types";
 
 const TILE_BASE = "https://tiles.openstreetmap.us/vector";
 
@@ -9,40 +13,12 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
     ({ visibility: layers[key].visible ? "visible" : "none" } as const);
 
   const dark = !invertColors;
-  const colored = (key: keyof MapLayers) => layers[key].color;
-
-  const palette = {
-    background:   { grayscale: { dark: "#000000", light: "#ffffff" }, colored: { dark: "#000000", light: "#ffffff" } },
-    landcover:    { grayscale: { dark: "#0d0d0d",  light: "#f0f0f0" }, colored: { dark: "#0d0d0d",  light: "#f0f0f0" } },
-    landuse:      { grayscale: { dark: "#141414",  light: "#e8e8e8" }, colored: { dark: "#141414",  light: "#e8e8e8" } },
-    park:         { grayscale: { dark: "#161616",  light: "#eeeeee" }, colored: { dark: "#161616",  light: "#e4ede4" } },
-    labels:       { grayscale: { dark: "#ffffff",  light: "#111111" }, colored: { dark: "#ffffff",  light: "#111111" } },
-    labelHalo:    { grayscale: { dark: "#000000",  light: "#ffffff" }, colored: { dark: "#000000",  light: "#ffffff" } },
-    peak:         { grayscale: { dark: "#cccccc",  light: "#333333" }, colored: { dark: "#cccccc",  light: "#333333" } },
-    textHalo:     { grayscale: { dark: "#0d0d0d",  light: "#ffffff" }, colored: { dark: "#0d0d0d",  light: "#ffffff" } },
-    contours:     { grayscale: { dark: "#ffffff",  light: "#777777" }, colored: { dark: "#c87941",  light: "#c87941" } },
-    contourIndex: { grayscale: { dark: "#ffffff",  light: "#555555" }, colored: { dark: "#a05020",  light: "#a05020" } },
-    trails:       { grayscale: { dark: "#888888",  light: "#777777" }, colored: { dark: "#a3be8c",  light: "#a3be8c" } },
-    trailLabel:   { grayscale: { dark: "#aaaaaa",  light: "#666666" }, colored: { dark: "#aaaaaa",  light: "#666666" } },
-    waterFill:    { grayscale: { dark: "#262626",  light:   "#dddddd" }, colored: { dark: "#5e81ac",  light: "#5e81ac" } },
-    waterway:     { grayscale: { dark: "#2d2d2d",  light:   "#dddddd" }, colored: { dark: "#5e81ac",  light: "#5e81ac" } },
-    roads: {
-      minor:  { grayscale: { dark: "#262626", light: "#cccccc" }, colored: { dark: "#262626", light: "#cccccc" } },
-      medium: { grayscale: { dark: "#313131", light: "#bbbbbb" }, colored: { dark: "#313131", light: "#bbbbbb" } },
-      major:  { grayscale: { dark: "#424242", light: "#aaaaaa" }, colored: { dark: "#424242", light: "#aaaaaa" } },
-    },
-    poiCamping:   { grayscale: { dark: "#888888", light: "#666666" }, colored: { dark: "#a3be8c", light: "#4a7a4a" } },
-    poiParking:   { grayscale: { dark: "#777777", light: "#777777" }, colored: { dark: "#81a1c1", light: "#2e6096" } },
-    poiViewpoint: { grayscale: { dark: "#aaaaaa", light: "#555555" }, colored: { dark: "#d08770", light: "#a04020" } },
-    poiAmenity:   { grayscale: { dark: "#666666", light: "#888888" }, colored: { dark: "#ebcb8b", light: "#8b6914" } },
-    poiRestrooms:      { grayscale: { dark: "#666666", light: "#888888" }, colored: { dark: "#b48ead", light: "#7a4a7a" } },
-    poiTransportation: { grayscale: { dark: "#888888", light: "#666666" }, colored: { dark: "#88c0d0", light: "#2e6a7a" } },
-  };
-
-  type PaletteEntry = { grayscale: { dark: string; light: string }; colored: { dark: string; light: string } };
-  const theme = dark ? "dark" : "light";
-  const c = (entry: PaletteEntry, isColored = false) =>
-    isColored ? entry.colored[theme] : entry.grayscale[theme];
+  const base: Palette = dark ? darkMatter : positron;
+  const over: Palette = dark ? coloredDark : coloredLight;
+  const c = (key: keyof Omit<Palette, "roads">, isColored = false): string =>
+    isColored ? over[key] : base[key];
+  const road = (sub: keyof Palette["roads"], isColored = false): string =>
+    isColored ? over.roads[sub] : base.roads[sub];
 
   return JSON.stringify({
     version: 8,
@@ -70,7 +46,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
     },
     layers: [
       // Background
-      { id: "background", type: "background", paint: { "background-color": c(palette.background) } },
+      { id: "background", type: "background", paint: { "background-color": c("background") } },
 
       // Land
       {
@@ -78,21 +54,21 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         type: "fill",
         source: "osm",
         "source-layer": "landcover",
-        paint: { "fill-color": c(palette.landcover) },
+        paint: { "fill-color": c("landcover") },
       },
       {
         id: "landuse",
         type: "fill",
         source: "osm",
         "source-layer": "landuse",
-        paint: { "fill-color": c(palette.landuse) },
+        paint: { "fill-color": c("landuse") },
       },
       {
         id: "park",
         type: "fill",
         source: "osm",
         "source-layer": "park",
-        paint: { "fill-color": c(palette.park) },
+        paint: { "fill-color": c("park") },
       },
 
       // Water
@@ -102,7 +78,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         source: "osm",
         "source-layer": "water",
         layout: vis("water"),
-        paint: { "fill-color": c(palette.waterFill, colored("water")) },
+        paint: { "fill-color": c("waterFill", layers.water.color), "fill-opacity": 0.3 },
       },
       {
         id: "waterway",
@@ -110,7 +86,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         source: "osm",
         "source-layer": "waterway",
         layout: vis("water"),
-        paint: { "line-color": c(palette.waterway, colored("water")), "line-width": 1 },
+        paint: { "line-color": c("waterway", layers.water.color), "line-width": 1, "line-opacity": 0.3 },
       },
 
       // Water names
@@ -127,8 +103,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "symbol-placement": "point",
         },
         paint: {
-          "text-color": c(palette.labels),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("labels"),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -141,7 +117,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "contours",
         layout: vis("contours"),
         filter: ["!", ["get", "idx"]],
-        paint: { "line-color": c(palette.contours, colored("contours")), "line-width": 0.5, "line-opacity": 0.9 },
+        paint: { "line-color": c("contours", layers.contours.color), "line-width": 0.5, "line-opacity": 0.4 },
       },
 
       // Contours — index (every 5th)
@@ -152,7 +128,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "contours",
         layout: vis("contours"),
         filter: ["get", "idx"],
-        paint: { "line-color": c(palette.contourIndex, colored("contours")), "line-width": 1, "line-opacity": 1 },
+        paint: { "line-color": c("contourIndex", layers.contours.color), "line-width": 1.5, "line-opacity": 0.4 },
       },
 
       // Contour elevation labels (index lines only)
@@ -172,8 +148,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-max-angle": 30,
         },
         paint: {
-          "text-color": c(palette.contourIndex, colored("contours")),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("contourIndex", layers.contours.color),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -186,7 +162,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "transportation",
         layout: vis("roads"),
         filter: ["in", "class", "minor", "service", "track"],
-        paint: { "line-color": c(palette.roads.minor, colored("roads")), "line-width": 1 },
+        paint: { "line-color": road("minor", layers.roads.color), "line-width": 1 },
       },
       {
         id: "roads-medium",
@@ -195,7 +171,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "transportation",
         layout: vis("roads"),
         filter: ["in", "class", "tertiary", "secondary"],
-        paint: { "line-color": c(palette.roads.medium, colored("roads")), "line-width": 1.5 },
+        paint: { "line-color": road("medium", layers.roads.color), "line-width": 1.5 },
       },
       {
         id: "roads-major",
@@ -204,7 +180,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "transportation",
         layout: vis("roads"),
         filter: ["in", "class", "primary", "trunk", "motorway"],
-        paint: { "line-color": c(palette.roads.major, colored("roads")), "line-width": 2.5 },
+        paint: { "line-color": road("major", layers.roads.color), "line-width": 2.5 },
       },
 
       // Road labels
@@ -223,8 +199,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "symbol-spacing": 300,
         },
         paint: {
-          "text-color": c(palette.labels),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("labels"),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -237,7 +213,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "trail",
         layout: { ...vis("trails"), "line-cap": "round" },
         paint: {
-          "line-color": c(palette.trails, colored("trails")),
+          "line-color": c("trails", layers.trails.color),
           "line-width": 1,
           "line-dasharray": [3, 2],
         },
@@ -258,8 +234,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-max-angle": 30,
         },
         paint: {
-          "text-color": c(palette.trailLabel, colored("trails")),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("trailLabel", layers.trails.color),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -278,8 +254,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-max-width": 8,
         },
         paint: {
-          "text-color": c(palette.labels),
-          "text-halo-color": c(palette.labelHalo),
+          "text-color": c("labels"),
+          "text-halo-color": c("labelHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -299,8 +275,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-offset": [0, 0.5],
         },
         paint: {
-          "text-color": c(palette.peak),
-          "text-halo-color": c(palette.labelHalo),
+          "text-color": c("peak"),
+          "text-halo-color": c("labelHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -322,8 +298,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-offset": [0, 0.2],
         },
         paint: {
-          "text-color": c(palette.poiCamping, colored("poiCamping")),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("poiCamping", layers.poiCamping.color),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -345,8 +321,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-offset": [0, 0.2],
         },
         paint: {
-          "text-color": c(palette.poiParking, colored("poiParking")),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("poiParking", layers.poiParking.color),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -368,8 +344,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-offset": [0, 0.2],
         },
         paint: {
-          "text-color": c(palette.poiViewpoint, colored("poiViewpoints")),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("poiViewpoint", layers.poiViewpoints.color),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -391,8 +367,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-offset": [0, 0.2],
         },
         paint: {
-          "text-color": c(palette.poiAmenity, colored("poiAmenities")),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("poiAmenity", layers.poiAmenities.color),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -414,8 +390,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-offset": [0, 0.2],
         },
         paint: {
-          "text-color": c(palette.poiTransportation, colored("poiTransportation")),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("poiTransportation", layers.poiTransportation.color),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
@@ -437,8 +413,8 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
           "text-offset": [0, 0.2],
         },
         paint: {
-          "text-color": c(palette.poiRestrooms, colored("poiRestrooms")),
-          "text-halo-color": c(palette.textHalo),
+          "text-color": c("poiRestrooms", layers.poiRestrooms.color),
+          "text-halo-color": c("textHalo"),
           "text-halo-width": 1.5,
         },
       },
