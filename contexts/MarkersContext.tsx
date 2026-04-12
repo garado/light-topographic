@@ -11,7 +11,7 @@ interface MarkersContextType {
   markers: Marker[];
   addMarker: (marker: Omit<Marker, "id">) => void;
   removeMarker: (id: string) => void;
-  updateMarker: (id: string, name: string) => void;
+  updateMarker: (id: string, name: string, coords: [number, number]) => void;
 }
 
 const MarkersContext = createContext<MarkersContextType>({
@@ -34,8 +34,8 @@ export const MarkersProvider = ({ children }: { children: ReactNode }) => {
     setMarkers(markers.filter((m) => m.id !== id));
   };
 
-  const updateMarker = (id: string, name: string) => {
-    setMarkers(markers.map((m) => (m.id === id ? { ...m, name } : m)));
+  const updateMarker = (id: string, name: string, coords: [number, number]) => {
+    setMarkers(markers.map((m) => (m.id === id ? { ...m, name, coords } : m)));
   };
 
   return (

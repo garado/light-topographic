@@ -9,7 +9,6 @@ import { StyledText } from "@/components/StyledText";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useMarkers, type Marker } from "@/contexts/MarkersContext";
 import { editMarkerState } from "@/utils/editMarkerState";
-import { editPresetState } from "@/utils/editPresetState";
 import { mapFocusState } from "@/utils/mapFocusState";
 import { n } from "@/utils/scaling";
 
@@ -48,25 +47,27 @@ function MarkerRow({
 }
 
 export default function MarkersScreen() {
-  const { markers, removeMarker, updateMarker } = useMarkers();
+  const { markers, removeMarker } = useMarkers();
   const { invertColors } = useInvertColors();
   const [editMode, setEditMode] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       setEditMode(false);
-      if (editPresetState.pendingName !== null && editMarkerState.id !== null) {
-        updateMarker(editMarkerState.id, editPresetState.pendingName);
-        editPresetState.pendingName = null;
-        editMarkerState.id = null;
-      }
-    }, [updateMarker]),
+    }, []),
   );
 
   const handleMarkerPress = (marker: Marker) => {
     if (editMode) {
       editMarkerState.id = marker.id;
-      router.push({ pathname: "/marker/edit-name", params: { currentName: marker.name } });
+      router.push({
+        pathname: "/marker/edit",
+        params: {
+          currentName: marker.name,
+          currentLat: marker.coords[1].toFixed(6),
+          currentLon: marker.coords[0].toFixed(6),
+        },
+      });
     } else {
       mapFocusState.flyTo = marker.coords;
       router.navigate("/");
@@ -76,7 +77,11 @@ export default function MarkersScreen() {
   if (markers.length === 0) {
     return (
       <View style={[styles.screen, { backgroundColor: invertColors ? "white" : "black" }]}>
-        <Header headerTitle="Markers" hideBackButton />
+        <Header
+          headerTitle="Markers"
+          hideBackButton
+          rightAction={{ icon: "add", onPress: () => router.push("/marker/new") }}
+        />
         <View style={styles.emptyState}>
           <StyledText style={styles.emptyMessage}>No markers saved</StyledText>
           <StyledText style={styles.emptyHint}>Long press on the map to add one</StyledText>
@@ -94,6 +99,11 @@ export default function MarkersScreen() {
           icon: "edit",
           onPress: () => setEditMode((v) => !v),
           active: editMode,
+        },
+        {
+          icon: "add",
+          onPress: () => router.push("/marker/new"),
+          active: false,
         },
       ]}
     >

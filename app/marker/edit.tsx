@@ -1,27 +1,32 @@
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import { StyleSheet } from "react-native";
-import { router, useFocusEffect } from "expo-router";
 import ContentContainer from "@/components/ContentContainer";
 import { HapticPressable } from "@/components/HapticPressable";
 import { SelectorButton } from "@/components/SelectorButton";
 import { StyledText } from "@/components/StyledText";
 import { useMarkers } from "@/contexts/MarkersContext";
-import { newMarkerState } from "@/utils/newMarkerState";
+import { editMarkerState } from "@/utils/editMarkerState";
 import { editPresetState } from "@/utils/editPresetState";
+import { newMarkerState } from "@/utils/newMarkerState";
 import { n } from "@/utils/scaling";
 
-export default function NewMarkerScreen() {
-  const { addMarker } = useMarkers();
-  const [lat, setLat] = useState("");
-  const [lon, setLon] = useState("");
-  const [name, setName] = useState("");
+export default function EditMarkerScreen() {
+  const { currentName, currentLat, currentLon } = useLocalSearchParams<{
+    currentName: string;
+    currentLat: string;
+    currentLon: string;
+  }>();
+  const { updateMarker } = useMarkers();
+  const [name, setName] = useState(currentName ?? "");
+  const [lat, setLat] = useState(currentLat ?? "");
+  const [lon, setLon] = useState(currentLon ?? "");
 
   useFocusEffect(
     useCallback(() => {
-      if (newMarkerState.coords !== null) {
-        setLat(newMarkerState.coords[1].toFixed(6));
-        setLon(newMarkerState.coords[0].toFixed(6));
-        newMarkerState.coords = null;
+      if (editPresetState.pendingName !== null) {
+        setName(editPresetState.pendingName);
+        editPresetState.pendingName = null;
       }
       if (newMarkerState.pendingLat !== null) {
         setLat(newMarkerState.pendingLat);
@@ -31,10 +36,6 @@ export default function NewMarkerScreen() {
         setLon(newMarkerState.pendingLon);
         newMarkerState.pendingLon = null;
       }
-      if (editPresetState.pendingName !== null) {
-        setName(editPresetState.pendingName);
-        editPresetState.pendingName = null;
-      }
     }, []),
   );
 
@@ -43,14 +44,15 @@ export default function NewMarkerScreen() {
   const coordsValid = !isNaN(parsedLat) && !isNaN(parsedLon);
 
   const handleSave = () => {
-    if (!coordsValid) return;
-    addMarker({ name: name.trim() || "Unnamed", coords: [parsedLon, parsedLat] });
+    if (!coordsValid || editMarkerState.id === null) return;
+    updateMarker(editMarkerState.id, name.trim() || "Unnamed", [parsedLon, parsedLat]);
+    editMarkerState.id = null;
     router.back();
   };
 
   return (
     <ContentContainer
-      headerTitle="Save Marker"
+      headerTitle="Edit Marker"
       contentGap={32}
       footer={
         <HapticPressable onPress={handleSave} style={[styles.saveButton, { opacity: coordsValid ? 1 : 0.3 }]}>
