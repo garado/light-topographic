@@ -6,7 +6,7 @@
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
-import { Animated, PermissionsAndroid, StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
 import { StyledText } from "@/components/StyledText";
@@ -32,6 +32,7 @@ MapLibreGL.setAccessToken("pk.placeholder");
 const DOT_SIZE = 12;
 const CONE_HEIGHT = DOT_SIZE * 1.5;
 const CONE_HALF_WIDTH = DOT_SIZE / 2;
+const DEFAULT_COORDS = [40.6975, -73.9734];
 
 export default function MapScreen() {
   useColor();
@@ -63,7 +64,7 @@ export default function MapScreen() {
   }, []);
 
   const {
-    coords, initialCoords, lastFixLabel, locateFollowing,
+    coords, lastFixLabel, locateFollowing,
     locateModeRef, lockBearingRef, setLocateMode, jumpToLocation,
   } = useLocation({ locationMode, cameraRef, coordsRef, bearingRef, moveCamera });
 
@@ -189,7 +190,7 @@ export default function MapScreen() {
         <MapLibreGL.Camera
           ref={cameraRef}
           zoomLevel={13}
-          centerCoordinate={initialCoords ?? [0, 0]}
+          centerCoordinate={DEFAULT_COORDS}
           animationMode="none"
         />
         {activeRoute && layers.route.visible && (() => {
