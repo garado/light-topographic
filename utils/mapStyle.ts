@@ -7,6 +7,13 @@ import type { Palette } from "./mapStyle/types";
 
 const TILE_BASE = "https://tiles.openstreetmap.us/vector";
 
+export function resolveRouteColor(invertColors: boolean, colored: boolean): string {
+  const dark = !invertColors;
+  const base = dark ? darkMatter : positron;
+  const over = dark ? coloredDark : coloredLight;
+  return colored ? over.route : base.route;
+}
+
 export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOnly = false, units: "imperial" | "metric" = "metric") {
   const tileUrl = (path: string) =>
     offlineOnly ? `http://localhost:0/${path}/{z}/{x}/{y}` : `${TILE_BASE}/${path}/{z}/{x}/{y}.mvt`;

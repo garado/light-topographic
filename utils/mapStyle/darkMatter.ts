@@ -27,4 +27,5 @@ export const darkMatter: Palette = {
   poiAmenity: "#666666",
   poiRestrooms: "#666666",
   poiTransportation: "#888888",
+  route:             "#ffffff",
 };

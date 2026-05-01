@@ -27,4 +27,5 @@ export const positron: Palette = {
   poiAmenity: "#888888",
   poiRestrooms: "#888888",
   poiTransportation: "#777777",
+  route:             "#000000",
 };

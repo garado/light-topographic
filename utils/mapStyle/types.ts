@@ -24,4 +24,5 @@ export type Palette = {
   poiAmenity:        string;
   poiRestrooms:      string;
   poiTransportation: string;
+  route:             string;
 };

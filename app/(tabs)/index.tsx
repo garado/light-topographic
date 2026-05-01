@@ -11,7 +11,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { HapticPressable } from "@/components/HapticPressable";
 import { StyledText } from "@/components/StyledText";
 import { n } from "@/utils/scaling";
-import { buildMapStyle } from "@/utils/mapStyle";
+import { buildMapStyle, resolveRouteColor } from "@/utils/mapStyle";
 import { useMapLayers } from "@/contexts/MapLayersContext";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { useMarkers } from "@/contexts/MarkersContext";
@@ -44,7 +44,7 @@ export default function MapScreen() {
   const { activeRoute } = useRoutes();
   const { markers } = useMarkers();
   const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors, false, units), [layers, invertColors, units]);
-  const routeColor = layers.route.color ? "#ebcb8b" : "#ffffff";
+  const routeColor = resolveRouteColor(invertColors, layers.route.color ?? false);
 
   const mapRef = useRef<MapLibreGL.MapView>(null);
   const cameraRef = useRef<MapLibreGL.Camera>(null);
@@ -211,7 +211,6 @@ export default function MapScreen() {
           animationMode="none"
         />
         {activeRoute && layers.route.visible && (() => {
-          const routeColor = layers.route.color ? "#ebcb8b" : "#ffffff";
           const coords = activeRoute.geojson.geometry.coordinates;
           return (
             <>
@@ -335,7 +334,7 @@ export default function MapScreen() {
       {waypointScreenPositions.map((w, i) => (
         <View key={i} style={[styles.waypointPin, { left: w.x - n(14), top: w.y - n(28) }]} pointerEvents="none">
           <MaterialIcons name="place" size={n(28)} color={routeColor} />
-          {w.name && <StyledText style={[styles.waypointLabel, { color: routeColor }]}>{w.name}</StyledText>}
+          {w.name && <StyledText style={[styles.waypointLabel, { color: invertColors ? "black" : "white" }]}>{w.name}</StyledText>}
         </View>
       ))}
 
