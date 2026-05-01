@@ -33,7 +33,7 @@ MapLibreGL.setAccessToken("pk.placeholder");
 const DOT_SIZE = 12;
 const CONE_HEIGHT = DOT_SIZE * 1.5;
 const CONE_HALF_WIDTH = DOT_SIZE / 2;
-const DEFAULT_COORDS = [40.6975, -73.9734];
+const DEFAULT_COORDS = [-73.9734, 40.6975];
 
 export default function MapScreen() {
   useColor();
