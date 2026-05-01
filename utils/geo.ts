@@ -15,17 +15,40 @@ export function routeTotalMiles(coords: [number, number][]): number {
 export function scaleBarInfo(zoom: number, lat: number, units: "imperial" | "metric"): { widthPx: number; label: string } {
   const metersPerPx = (156543.03392 * Math.cos(lat * Math.PI / 180)) / Math.pow(2, zoom);
   const targetMeters = 80 * metersPerPx;
-  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
-  const nice = steps.find((s) => s >= targetMeters) ?? steps[steps.length - 1];
-  const widthPx = nice / metersPerPx;
+
+  let niceMeters: number;
   let label: string;
+
   if (units === "imperial") {
-    const feet = nice * 3.28084;
-    label = feet < 528 ? `${Math.round(feet)} ft` : `${(feet / 5280).toFixed(1)} mi`;
+    const targetFeet = targetMeters * 3.28084;
+    const ftSteps = [50, 100, 200, 500, 1000, 2000];
+    const miSteps = [0.5, 1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
+    if (targetFeet < miSteps[0] * 5280) {
+      const niceFt = ftSteps.find((s) => s >= targetFeet) ?? ftSteps[ftSteps.length - 1];
+      niceMeters = niceFt / 3.28084;
+      label = `${niceFt} ft`;
+    } else {
+      const targetMi = targetFeet / 5280;
+      const niceMi = miSteps.find((s) => s >= targetMi) ?? miSteps[miSteps.length - 1];
+      niceMeters = niceMi * 1609.344;
+      label = `${niceMi} mi`;
+    }
   } else {
-    label = nice < 1000 ? `${nice} m` : `${(nice / 1000).toFixed(nice < 10000 ? 1 : 0)} km`;
+    const mSteps = [50, 100, 200, 500, 1000, 2000];
+    const kmSteps = [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
+    if (targetMeters < kmSteps[0] * 1000) {
+      const niceM = mSteps.find((s) => s >= targetMeters) ?? mSteps[mSteps.length - 1];
+      niceMeters = niceM;
+      label = `${niceM} m`;
+    } else {
+      const targetKm = targetMeters / 1000;
+      const niceKm = kmSteps.find((s) => s >= targetKm) ?? kmSteps[kmSteps.length - 1];
+      niceMeters = niceKm * 1000;
+      label = `${niceKm} km`;
+    }
   }
-  return { widthPx, label };
+
+  return { widthPx: niceMeters / metersPerPx, label };
 }
 
 export function interpolateRoute(coords: [number, number][], t: number): [number, number] {
