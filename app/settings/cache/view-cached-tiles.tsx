@@ -25,7 +25,7 @@ export default function CachedTilesScreen() {
   const { activeRoute } = useRoutes();
   const cameraRef = useRef<MapLibreGL.Camera>(null);
   const snapshot = useRef<MapLayers | null>(null);
-  const MAP_STYLE = useMemo(() => buildMapStyle(layers), [layers]);
+  const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors), [layers, invertColors]);
   const [coords, setCoords] = useState<[number, number] | null>(null);
 
   useFocusEffect(
