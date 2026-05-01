@@ -33,8 +33,6 @@ Tap the Target icon to center the map on your current coordinates and toggle aut
 
 <img src="./assets/images/routes.png">
 
-#### Route scrubber
-
 ### View cached tiles available for offline use
 
 <img src="./assets/images/cache.png">
