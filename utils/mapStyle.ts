@@ -6,7 +6,7 @@ import type { Palette } from "./mapStyle/types";
 
 const TILE_BASE = "https://tiles.openstreetmap.us/vector";
 
-export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOnly = false) {
+export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOnly = false, units: "imperial" | "metric" = "metric") {
   const tileUrl = (path: string) =>
     offlineOnly ? `http://localhost:0/${path}/{z}/{x}/{y}` : `${TILE_BASE}/${path}/{z}/{x}/{y}.mvt`;
   const vis = (key: keyof MapLayers) =>
@@ -268,7 +268,9 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         "source-layer": "mountain_peak",
         layout: {
           ...vis("labels"),
-          "text-field": ["concat", ["get", "name"], "\n", ["get", "ele"], "m"],
+          "text-field": units === "imperial"
+            ? ["case", ["has", "ele"], ["concat", ["get", "name"], "\n", ["to-string", ["round", ["*", ["get", "ele"], 3.28084]]], "ft"], ["get", "name"]]
+            : ["case", ["has", "ele"], ["concat", ["get", "name"], "\n", ["get", "ele"], "m"], ["get", "name"]],
           "text-font": ["Noto Sans Regular"],
           "text-size": 11,
           "text-anchor": "top",

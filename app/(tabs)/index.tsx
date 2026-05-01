@@ -39,7 +39,7 @@ export default function MapScreen() {
   const { layers } = useMapLayers();
   const { invertColors } = useInvertColors();
   const { locationMode } = useLocationMode();
-  const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors), [layers, invertColors]);
+  const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors, false, units), [layers, invertColors, units]);
   const { activeRoute } = useRoutes();
   const { units } = useUnits();
   const { markers } = useMarkers();
