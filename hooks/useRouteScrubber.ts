@@ -4,6 +4,7 @@ import type { RefObject } from "react";
 import type { StoredRoute } from "@/contexts/RoutesContext";
 import { interpolateRoute, routeTotalMiles } from "@/utils/geo";
 import { CompassMode, LocateMode } from "@/utils/mapModes";
+import { resolveAnimDuration } from "@/utils/camera";
 
 export function useRouteScrubber({
   activeRoute,
@@ -76,12 +77,16 @@ export function useRouteScrubber({
     setScrubPos(0);
     setScrubVisible(false);
     if (!activeRoute || !cameraRef.current) return;
-    cameraRef.current.fitBounds(
-      [activeRoute.bounds[2], activeRoute.bounds[3]],
-      [activeRoute.bounds[0], activeRoute.bounds[1]],
-      50,
-      600,
-    );
+    const routeCenterLon = (activeRoute.bounds[0] + activeRoute.bounds[2]) / 2;
+    const routeCenterLat = (activeRoute.bounds[1] + activeRoute.bounds[3]) / 2;
+    resolveAnimDuration(mapRef, routeCenterLon, routeCenterLat, 600).then((dur) => {
+      cameraRef.current?.fitBounds(
+        [activeRoute.bounds[2], activeRoute.bounds[3]],
+        [activeRoute.bounds[0], activeRoute.bounds[1]],
+        50,
+        dur,
+      );
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeRoute]);
 
@@ -89,12 +94,16 @@ export function useRouteScrubber({
     if (!activeRoute || !cameraRef.current) return;
     setLocateMode(LocateMode.Free);
     if (compassModeRef.current === CompassMode.Heading) setCompassMode(CompassMode.Free);
-    moveCamera(() => cameraRef.current!.fitBounds(
-      [activeRoute.bounds[2], activeRoute.bounds[3]],
-      [activeRoute.bounds[0], activeRoute.bounds[1]],
-      50,
-      600,
-    ), 600);
+    const routeCenterLon = (activeRoute.bounds[0] + activeRoute.bounds[2]) / 2;
+    const routeCenterLat = (activeRoute.bounds[1] + activeRoute.bounds[3]) / 2;
+    resolveAnimDuration(mapRef, routeCenterLon, routeCenterLat, 600).then((dur) => {
+      moveCamera(() => cameraRef.current!.fitBounds(
+        [activeRoute.bounds[2], activeRoute.bounds[3]],
+        [activeRoute.bounds[0], activeRoute.bounds[1]],
+        50,
+        dur,
+      ), dur);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeRoute, setLocateMode, setCompassMode]);
 

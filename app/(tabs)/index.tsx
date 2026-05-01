@@ -18,6 +18,7 @@ import { useMarkers } from "@/contexts/MarkersContext";
 import { useRoutes } from "@/contexts/RoutesContext";
 import { useUnits } from "@/contexts/UnitsContext";
 import { mapFocusState } from "@/utils/mapFocusState";
+import { resolveAnimDuration } from "@/utils/camera";
 import { newMarkerState } from "@/utils/newMarkerState";
 import { scaleBarInfo } from "@/utils/geo";
 import { formatAccuracy } from "@/utils/units";
@@ -71,7 +72,7 @@ export default function MapScreen() {
   const {
     coords, accuracy, lastFixLabel, locateFollowing,
     locateModeRef, lockBearingRef, setLocateMode, jumpToLocation,
-  } = useLocation({ locationMode, cameraRef, coordsRef, bearingRef, moveCamera });
+  } = useLocation({ locationMode, cameraRef, mapRef, coordsRef, bearingRef, moveCamera });
 
   const {
     hasHeading, bearing, setBearing, compassMode, compassModeRef,
@@ -86,8 +87,9 @@ export default function MapScreen() {
   useFocusEffect(useCallback(() => {
     if (mapFocusState.flyTo && cameraRef.current) {
       setLocateMode(LocateMode.Free);
-      cameraRef.current.flyTo(mapFocusState.flyTo, 400);
+      const dest = mapFocusState.flyTo;
       mapFocusState.flyTo = null;
+      resolveAnimDuration(mapRef, dest[0], dest[1], 400).then((dur) => cameraRef.current?.flyTo(dest, dur));
     }
   }, [setLocateMode]));
 

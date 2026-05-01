@@ -4,16 +4,19 @@ import { PermissionsAndroid } from "react-native";
 import type { MutableRefObject, RefObject } from "react";
 import type { LocationMode } from "@/contexts/LocationModeContext";
 import { LocateMode } from "@/utils/mapModes";
+import { resolveAnimDuration } from "@/utils/camera";
 
 export function useLocation({
   locationMode,
   cameraRef,
+  mapRef,
   coordsRef,
   bearingRef,
   moveCamera,
 }: {
   locationMode: LocationMode;
   cameraRef: RefObject<any>;
+  mapRef: RefObject<any>;
   coordsRef: MutableRefObject<[number, number] | null>;
   bearingRef: MutableRefObject<number>;
   moveCamera: (fn: () => void, duration: number) => void;
@@ -45,7 +48,9 @@ export function useLocation({
           coordsRef.current = c;
           if (!hasFlewToFirstFix.current) {
             hasFlewToFirstFix.current = true;
-            moveCamera(() => cameraRef.current?.flyTo(c, 400), 400);
+            resolveAnimDuration(mapRef, c[0], c[1], 400).then((dur) => {
+              moveCamera(() => cameraRef.current?.flyTo(c, dur), dur);
+            });
           }
         },
         (err) => console.error("Location error:", err),
@@ -93,7 +98,7 @@ export function useLocation({
           setLastFixTime(Date.now());
           coordsRef.current = c;
           setAccuracy(pos.coords.accuracy ?? null);
-          cameraRef.current?.flyTo(c, 400);
+          resolveAnimDuration(mapRef, c[0], c[1], 400).then((dur) => cameraRef.current?.flyTo(c, dur));
         },
         (err) => console.error("Location error:", err),
         { enableHighAccuracy: true, timeout: 10000 },
@@ -104,11 +109,16 @@ export function useLocation({
     if (!coords) return;
     switch (locateModeRef.current) {
       case LocateMode.Free:
-        moveCamera(() => cameraRef.current!.flyTo(coords, 400), 400);
+        resolveAnimDuration(mapRef, coords[0], coords[1], 400).then((dur) => {
+          moveCamera(() => cameraRef.current!.flyTo(coords, dur), dur);
+        });
         setLocateMode(LocateMode.Centered);
         break;
       case LocateMode.Centered:
-        moveCamera(() => cameraRef.current!.setCamera({ centerCoordinate: coords, zoomLevel: 16, animationDuration: 400, animationMode: "flyTo" }), 400);
+        resolveAnimDuration(mapRef, coords[0], coords[1], 400).then((dur) => {
+          const mode = dur > 0 ? "flyTo" : "none";
+          moveCamera(() => cameraRef.current!.setCamera({ centerCoordinate: coords, zoomLevel: 16, animationDuration: dur, animationMode: mode }), dur);
+        });
         setLocateMode(LocateMode.Following);
         break;
       case LocateMode.Following:
