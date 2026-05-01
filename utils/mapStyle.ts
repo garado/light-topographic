@@ -1,4 +1,5 @@
 import type { MapLayers } from "@/contexts/MapLayersContext";
+import { FT_PER_M } from "./units";
 import { darkMatter } from "./mapStyle/darkMatter";
 import { positron } from "./mapStyle/positron";
 import { coloredDark, coloredLight } from "./mapStyle/colored";
@@ -269,7 +270,7 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         layout: {
           ...vis("labels"),
           "text-field": units === "imperial"
-            ? ["case", ["has", "ele"], ["concat", ["get", "name"], "\n", ["to-string", ["round", ["*", ["get", "ele"], 3.28084]]], "ft"], ["get", "name"]]
+            ? ["case", ["has", "ele"], ["concat", ["get", "name"], "\n", ["to-string", ["round", ["*", ["get", "ele"], FT_PER_M]]], "ft"], ["get", "name"]]
             : ["case", ["has", "ele"], ["concat", ["get", "name"], "\n", ["get", "ele"], "m"], ["get", "name"]],
           "text-font": ["Noto Sans Regular"],
           "text-size": 11,

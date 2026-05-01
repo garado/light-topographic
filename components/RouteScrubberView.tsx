@@ -3,6 +3,7 @@ import type { MutableRefObject } from "react";
 import type { PanResponderInstance } from "react-native";
 import { StyledText } from "@/components/StyledText";
 import { n } from "@/utils/scaling";
+import { formatDistance } from "@/utils/units";
 
 const SCRUB_THUMB = 12;
 
@@ -16,9 +17,7 @@ interface Props {
 }
 
 export function RouteScrubberView({ scrubPos, scrubHeightRef, scrubPan, routeMiles, units, invertColors }: Props) {
-  const remaining = units === "imperial"
-    ? `${(routeMiles * (1 - scrubPos)).toFixed(1)} mi`
-    : `${(routeMiles * 1.60934 * (1 - scrubPos)).toFixed(1)} km`;
+  const remaining = formatDistance(routeMiles * (1 - scrubPos), units);
 
   return (
     <>

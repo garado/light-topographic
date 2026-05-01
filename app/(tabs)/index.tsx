@@ -20,6 +20,7 @@ import { useUnits } from "@/contexts/UnitsContext";
 import { mapFocusState } from "@/utils/mapFocusState";
 import { newMarkerState } from "@/utils/newMarkerState";
 import { scaleBarInfo } from "@/utils/geo";
+import { formatAccuracy } from "@/utils/units";
 import { useColor } from "@/hooks/useColor";
 import { useLocationMode } from "@/contexts/LocationModeContext";
 import { useLocation } from "@/hooks/useLocation";
@@ -328,7 +329,7 @@ export default function MapScreen() {
       })()}
 
       <StyledText style={styles.lastFix}>
-        Last fix: {lastFixLabel}{accuracy !== null ? `\tAccuracy: ±${units === "imperial" ? `${Math.round(accuracy * 3.28084)}ft` : `${Math.round(accuracy)}m`}` : ""}
+        Last fix: {lastFixLabel}{accuracy !== null ? `\t${formatAccuracy(accuracy, units)}` : ""}
       </StyledText>
 
       {activeRoute && scrubVisible && (

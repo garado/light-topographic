@@ -1,3 +1,5 @@
+import { metersToFeet, feetToMeters, feetToMiles, milesToMeters, FT_PER_MI } from "./units";
+
 export function routeTotalMiles(coords: [number, number][]): number {
   const R = 3958.8;
   let total = 0;
@@ -20,17 +22,17 @@ export function scaleBarInfo(zoom: number, lat: number, units: "imperial" | "met
   let label: string;
 
   if (units === "imperial") {
-    const targetFeet = targetMeters * 3.28084;
+    const targetFeet = metersToFeet(targetMeters);
+    const targetMi = feetToMiles(targetFeet);
     const ftSteps = [50, 100, 200, 500, 1000, 2000];
     const miSteps = [0.5, 1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
-    if (targetFeet < miSteps[0] * 5280) {
+    if (targetMi < miSteps[0]) {
       const niceFt = ftSteps.find((s) => s >= targetFeet) ?? ftSteps[ftSteps.length - 1];
-      niceMeters = niceFt / 3.28084;
+      niceMeters = feetToMeters(niceFt);
       label = `${niceFt} ft`;
     } else {
-      const targetMi = targetFeet / 5280;
       const niceMi = miSteps.find((s) => s >= targetMi) ?? miSteps[miSteps.length - 1];
-      niceMeters = niceMi * 1609.344;
+      niceMeters = milesToMeters(niceMi);
       label = `${niceMi} mi`;
     }
   } else {
