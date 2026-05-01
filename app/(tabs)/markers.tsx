@@ -89,7 +89,7 @@ export default function MarkersScreen() {
         />
         <View style={styles.emptyState}>
           <StyledText style={styles.emptyMessage}>No markers saved</StyledText>
-          <StyledText style={styles.emptyHint}>Long press on the map to add one</StyledText>
+          <StyledText style={styles.emptyHint}>Long press on the map to add a marker</StyledText>
         </View>
       </View>
     );
