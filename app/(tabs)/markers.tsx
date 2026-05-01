@@ -35,6 +35,12 @@ function MarkerRow({
   const visible = marker.visible !== false;
   return (
     <View style={styles.row}>
+      <MaterialIcons
+        name={(marker.icon ?? "place") as any}
+        size={n(22)}
+        color={iconColor}
+        style={!visible ? styles.hidden : undefined}
+      />
       <HapticPressable style={styles.rowContent} onPress={onPress}>
         <StyledText style={[styles.markerName, !visible && styles.hidden]}>{marker.name}</StyledText>
         <StyledText style={styles.coords}>
@@ -78,6 +84,7 @@ export default function MarkersScreen() {
           currentName: marker.name,
           currentLat: marker.coords[1].toFixed(6),
           currentLon: marker.coords[0].toFixed(6),
+          currentIcon: marker.icon ?? "place",
         },
       });
     } else {

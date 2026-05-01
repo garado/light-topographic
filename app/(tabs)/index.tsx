@@ -58,7 +58,7 @@ export default function MapScreen() {
   const activeRouteRef = useRef(activeRoute);
   activeRouteRef.current = activeRoute;
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
-  const [markerScreenPositions, setMarkerScreenPositions] = useState<Record<string, { x: number; y: number; name: string }>>({});
+  const [markerScreenPositions, setMarkerScreenPositions] = useState<Record<string, { x: number; y: number; name: string; icon: string }>>({});
   const [waypointScreenPositions, setWaypointScreenPositions] = useState<{ name: string | null; x: number; y: number }[]>([]);
 
   useEffect(() => { MapLibreGL.offlineManager.setTileCountLimit(5000); }, []);
@@ -112,7 +112,7 @@ export default function MapScreen() {
       const entries = await Promise.all(
         currentMarkers.map(async (m) => {
           const point = await mapRef.current!.getPointInView(m.coords);
-          return [m.id, { x: point[0], y: point[1], name: m.name }] as const;
+          return [m.id, { x: point[0], y: point[1], name: m.name, icon: m.icon ?? "place" }] as const;
         }),
       );
       setMarkerScreenPositions(Object.fromEntries(entries));
@@ -324,7 +324,7 @@ export default function MapScreen() {
 
       {Object.entries(markerScreenPositions).map(([id, pos]) => (
         <View key={id} style={[styles.waypointPin, { left: pos.x - n(14), top: pos.y - n(28) }]} pointerEvents="none">
-          <MaterialIcons name="place" size={n(28)} color={invertColors ? "black" : "white"} />
+          <MaterialIcons name={pos.icon as any} size={n(28)} color={invertColors ? "black" : "white"} />
           {pos.name && zoom >= 12 ? <StyledText style={[styles.waypointLabel, { color: invertColors ? "black" : "white" }]}>{pos.name}</StyledText> : null}
         </View>
       ))}

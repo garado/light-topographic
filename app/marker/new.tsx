@@ -8,6 +8,8 @@ import { StyledText } from "@/components/StyledText";
 import { useMarkers } from "@/contexts/MarkersContext";
 import { newMarkerState } from "@/utils/newMarkerState";
 import { editPresetState } from "@/utils/editPresetState";
+import { DEFAULT_MARKER_ICON, MARKER_ICONS } from "@/utils/markerIcons";
+import { pickIconState } from "@/utils/pickIconState";
 import { n } from "@/utils/scaling";
 
 export default function NewMarkerScreen() {
@@ -15,6 +17,7 @@ export default function NewMarkerScreen() {
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
   const [name, setName] = useState("");
+  const [icon, setIcon] = useState(DEFAULT_MARKER_ICON);
 
   useFocusEffect(
     useCallback(() => {
@@ -35,6 +38,10 @@ export default function NewMarkerScreen() {
         setName(editPresetState.pendingName);
         editPresetState.pendingName = null;
       }
+      if (pickIconState.pendingIcon !== null) {
+        setIcon(pickIconState.pendingIcon);
+        pickIconState.pendingIcon = null;
+      }
     }, []),
   );
 
@@ -44,20 +51,25 @@ export default function NewMarkerScreen() {
 
   const handleSave = () => {
     if (!coordsValid) return;
-    addMarker({ name: name.trim() || "Unnamed", coords: [parsedLon, parsedLat] });
+    addMarker({ name: name.trim() || "Unnamed", coords: [parsedLon, parsedLat], icon });
     router.back();
   };
 
   return (
     <ContentContainer
       headerTitle="Save Marker"
-      contentGap={32}
+      contentGap={16}
       footer={
         <HapticPressable onPress={handleSave} style={[styles.saveButton, { opacity: coordsValid ? 1 : 0.3 }]}>
           <StyledText style={styles.saveButtonText}>Save Marker</StyledText>
         </HapticPressable>
       }
     >
+      <SelectorButton
+        label="Icon"
+        value={MARKER_ICONS.find((i) => i.key === icon)?.label ?? icon}
+        href={{ pathname: "/marker/pick-icon" }}
+      />
       <SelectorButton
         label="Name"
         value={name || "Tap to set name"}

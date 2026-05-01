@@ -9,18 +9,22 @@ import { useMarkers } from "@/contexts/MarkersContext";
 import { editMarkerState } from "@/utils/editMarkerState";
 import { editPresetState } from "@/utils/editPresetState";
 import { newMarkerState } from "@/utils/newMarkerState";
+import { DEFAULT_MARKER_ICON, MARKER_ICONS } from "@/utils/markerIcons";
+import { pickIconState } from "@/utils/pickIconState";
 import { n } from "@/utils/scaling";
 
 export default function EditMarkerScreen() {
-  const { currentName, currentLat, currentLon } = useLocalSearchParams<{
+  const { currentName, currentLat, currentLon, currentIcon } = useLocalSearchParams<{
     currentName: string;
     currentLat: string;
     currentLon: string;
+    currentIcon: string;
   }>();
   const { updateMarker } = useMarkers();
   const [name, setName] = useState(currentName ?? "");
   const [lat, setLat] = useState(currentLat ?? "");
   const [lon, setLon] = useState(currentLon ?? "");
+  const [icon, setIcon] = useState(currentIcon ?? DEFAULT_MARKER_ICON);
 
   useFocusEffect(
     useCallback(() => {
@@ -36,6 +40,10 @@ export default function EditMarkerScreen() {
         setLon(newMarkerState.pendingLon);
         newMarkerState.pendingLon = null;
       }
+      if (pickIconState.pendingIcon !== null) {
+        setIcon(pickIconState.pendingIcon);
+        pickIconState.pendingIcon = null;
+      }
     }, []),
   );
 
@@ -45,7 +53,7 @@ export default function EditMarkerScreen() {
 
   const handleSave = () => {
     if (!coordsValid || editMarkerState.id === null) return;
-    updateMarker(editMarkerState.id, name.trim() || "Unnamed", [parsedLon, parsedLat]);
+    updateMarker(editMarkerState.id, name.trim() || "Unnamed", [parsedLon, parsedLat], icon);
     editMarkerState.id = null;
     router.back();
   };
@@ -53,13 +61,18 @@ export default function EditMarkerScreen() {
   return (
     <ContentContainer
       headerTitle="Edit Marker"
-      contentGap={32}
+      contentGap={16}
       footer={
         <HapticPressable onPress={handleSave} style={[styles.saveButton, { opacity: coordsValid ? 1 : 0.3 }]}>
           <StyledText style={styles.saveButtonText}>Save Marker</StyledText>
         </HapticPressable>
       }
     >
+      <SelectorButton
+        label="Icon"
+        value={MARKER_ICONS.find((i) => i.key === icon)?.label ?? icon}
+        href={{ pathname: "/marker/pick-icon" }}
+      />
       <SelectorButton
         label="Name"
         value={name || "Tap to set name"}

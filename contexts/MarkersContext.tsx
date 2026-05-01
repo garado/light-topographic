@@ -6,13 +6,14 @@ export type Marker = {
   name: string;
   coords: [number, number]; // [lon, lat]
   visible: boolean;
+  icon: string;
 };
 
 interface MarkersContextType {
   markers: Marker[];
-  addMarker: (marker: Omit<Marker, "id">) => void;
+  addMarker: (marker: Omit<Marker, "id" | "visible">) => void;
   removeMarker: (id: string) => void;
-  updateMarker: (id: string, name: string, coords: [number, number]) => void;
+  updateMarker: (id: string, name: string, coords: [number, number], icon: string) => void;
   toggleMarkerVisibility: (id: string) => void;
 }
 
@@ -29,7 +30,7 @@ export const useMarkers = () => useContext(MarkersContext);
 export const MarkersProvider = ({ children }: { children: ReactNode }) => {
   const [markers, setMarkers] = usePersistedState<Marker[]>("markers", []);
 
-  const addMarker = (marker: Omit<Marker, "id">) => {
+  const addMarker = (marker: Omit<Marker, "id" | "visible">) => {
     setMarkers([...markers, { ...marker, id: Date.now().toString(), visible: true }]);
   };
 
@@ -37,8 +38,8 @@ export const MarkersProvider = ({ children }: { children: ReactNode }) => {
     setMarkers(markers.filter((m) => m.id !== id));
   };
 
-  const updateMarker = (id: string, name: string, coords: [number, number]) => {
-    setMarkers(markers.map((m) => (m.id === id ? { ...m, name, coords } : m)));
+  const updateMarker = (id: string, name: string, coords: [number, number], icon: string) => {
+    setMarkers(markers.map((m) => (m.id === id ? { ...m, name, coords, icon } : m)));
   };
 
   const toggleMarkerVisibility = (id: string) => {
