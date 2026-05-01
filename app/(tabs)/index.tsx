@@ -115,7 +115,7 @@ export default function MapScreen() {
     }
   }, [coords, setBearing, userHeadingRef, coneRotationAnim]);
 
-  useEffect(() => { updateDotPosition(); }, [updateDotPosition]);
+  useEffect(() => { updateDotPosition(); }, [updateDotPosition, markers]);
 
   const onRegionChanging = useCallback((feature?: {
     geometry?: { coordinates?: [number, number] };
