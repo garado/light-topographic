@@ -325,14 +325,14 @@ export default function MapScreen() {
       {Object.entries(markerScreenPositions).map(([id, pos]) => (
         <View key={id} style={[styles.waypointPin, { left: pos.x - n(14), top: pos.y - n(28) }]} pointerEvents="none">
           <MaterialIcons name="place" size={n(28)} color={invertColors ? "black" : "white"} />
-          {pos.name ? <StyledText style={[styles.waypointLabel, { color: invertColors ? "black" : "white" }]}>{pos.name}</StyledText> : null}
+          {pos.name && zoom >= 12 ? <StyledText style={[styles.waypointLabel, { color: invertColors ? "black" : "white" }]}>{pos.name}</StyledText> : null}
         </View>
       ))}
 
       {waypointScreenPositions.map((w, i) => (
         <View key={i} style={[styles.waypointPin, { left: w.x - n(14), top: w.y - n(28) }]} pointerEvents="none">
           <MaterialIcons name="place" size={n(28)} color={routeColor} />
-          {w.name && <StyledText style={[styles.waypointLabel, { color: invertColors ? "black" : "white" }]}>{w.name}</StyledText>}
+          {w.name && zoom >= 12 && <StyledText style={[styles.waypointLabel, { color: invertColors ? "black" : "white" }]}>{w.name}</StyledText>}
         </View>
       ))}
 
