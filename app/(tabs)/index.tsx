@@ -327,7 +327,9 @@ export default function MapScreen() {
         );
       })()}
 
-      <StyledText style={styles.lastFix}>Last fix: {lastFixLabel}</StyledText>
+      <StyledText style={styles.lastFix}>
+        Last fix: {lastFixLabel}{accuracy !== null ? `\tAccuracy: ±${units === "imperial" ? `${Math.round(accuracy * 3.28084)}ft` : `${Math.round(accuracy)}m`}` : ""}
+      </StyledText>
 
       {activeRoute && scrubVisible && (
         <RouteScrubberView
