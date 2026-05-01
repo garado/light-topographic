@@ -6,6 +6,7 @@ export type StoredRoute = {
   id: string;
   name: string;
   geojson: GpxRoute["geojson"];
+  waypoints: GpxRoute["waypoints"];
   bounds: GpxRoute["bounds"];
 };
 
@@ -44,6 +45,7 @@ export const RoutesProvider = ({ children }: { children: ReactNode }) => {
       id,
       name: route.name ?? "Unnamed Route",
       geojson: route.geojson,
+      waypoints: route.waypoints,
       bounds: route.bounds,
     };
     setRoutes([...routes, stored]);

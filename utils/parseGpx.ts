@@ -1,5 +1,11 @@
 import { XMLParser } from "fast-xml-parser";
 
+export type GpxWaypoint = {
+  name: string | null;
+  desc: string | null;
+  coords: [number, number];
+};
+
 export type GpxRoute = {
   name: string | null;
   geojson: {
@@ -7,6 +13,7 @@ export type GpxRoute = {
     geometry: { type: "LineString"; coordinates: [number, number][] };
     properties: Record<string, never>;
   };
+  waypoints: GpxWaypoint[];
   bounds: [number, number, number, number]; // [minLng, minLat, maxLng, maxLat]
 };
 
@@ -21,6 +28,7 @@ export function parseGpx(content: string): GpxRoute | null {
   if (!gpx) return null;
 
   const coords: [number, number][] = [];
+  const waypoints: GpxWaypoint[] = [];
   let name: string | null = null;
 
   if (gpx.trk) {
@@ -50,6 +58,17 @@ export function parseGpx(content: string): GpxRoute | null {
     }
   }
 
+  if (gpx.wpt) {
+    const wpts = Array.isArray(gpx.wpt) ? gpx.wpt : [gpx.wpt];
+    for (const wpt of wpts) {
+      waypoints.push({
+        name: typeof wpt.name === "string" ? wpt.name : null,
+        desc: typeof wpt.desc === "string" ? wpt.desc : null,
+        coords: [parseFloat(wpt["@_lon"]), parseFloat(wpt["@_lat"])],
+      });
+    }
+  }
+
   if (coords.length < 2) return null;
 
   const lngs = coords.map((c) => c[0]);
@@ -62,6 +81,7 @@ export function parseGpx(content: string): GpxRoute | null {
       geometry: { type: "LineString", coordinates: coords },
       properties: {},
     },
+    waypoints,
     bounds: [
       Math.min(...lngs),
       Math.min(...lats),

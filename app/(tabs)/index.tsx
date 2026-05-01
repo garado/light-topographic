@@ -40,10 +40,11 @@ export default function MapScreen() {
   const { layers } = useMapLayers();
   const { invertColors } = useInvertColors();
   const { locationMode } = useLocationMode();
-  const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors, false, units), [layers, invertColors, units]);
-  const { activeRoute } = useRoutes();
   const { units } = useUnits();
+  const { activeRoute } = useRoutes();
   const { markers } = useMarkers();
+  const MAP_STYLE = useMemo(() => buildMapStyle(layers, invertColors, false, units), [layers, invertColors, units]);
+  const routeColor = layers.route.color ? "#ebcb8b" : "#ffffff";
 
   const mapRef = useRef<MapLibreGL.MapView>(null);
   const cameraRef = useRef<MapLibreGL.Camera>(null);
@@ -53,8 +54,11 @@ export default function MapScreen() {
   const [zoom, setZoom] = useState(13);
   const markersRef = useRef(markers);
   markersRef.current = markers;
+  const activeRouteRef = useRef(activeRoute);
+  activeRouteRef.current = activeRoute;
   const [dotScreenPos, setDotScreenPos] = useState<{ x: number; y: number } | null>(null);
   const [markerScreenPositions, setMarkerScreenPositions] = useState<Record<string, { x: number; y: number }>>({});
+  const [waypointScreenPositions, setWaypointScreenPositions] = useState<{ name: string | null; x: number; y: number }[]>([]);
 
   useEffect(() => { MapLibreGL.offlineManager.setTileCountLimit(5000); }, []);
 
@@ -113,9 +117,21 @@ export default function MapScreen() {
     } else {
       setMarkerScreenPositions({});
     }
+    const waypoints = activeRouteRef.current?.waypoints ?? [];
+    if (waypoints.length > 0 && mapRef.current) {
+      const positions = await Promise.all(
+        waypoints.map(async (w) => {
+          const point = await mapRef.current!.getPointInView(w.coords);
+          return { name: w.name, x: point[0], y: point[1] };
+        }),
+      );
+      setWaypointScreenPositions(positions);
+    } else {
+      setWaypointScreenPositions([]);
+    }
   }, [coords, setBearing, userHeadingRef, coneRotationAnim]);
 
-  useEffect(() => { updateDotPosition(); }, [updateDotPosition, markers]);
+  useEffect(() => { updateDotPosition(); }, [updateDotPosition, markers, activeRoute]);
 
   const onRegionChanging = useCallback((feature?: {
     geometry?: { coordinates?: [number, number] };
@@ -316,6 +332,13 @@ export default function MapScreen() {
         />
       ))}
 
+      {waypointScreenPositions.map((w, i) => (
+        <View key={i} style={[styles.waypointPin, { left: w.x - n(14), top: w.y - n(28) }]} pointerEvents="none">
+          <MaterialIcons name="place" size={n(28)} color={routeColor} />
+          {w.name && <StyledText style={[styles.waypointLabel, { color: routeColor }]}>{w.name}</StyledText>}
+        </View>
+      ))}
+
       {(() => {
         const lat = coords?.[1] ?? 0;
         const { widthPx, label } = scaleBarInfo(zoom, lat, units);
@@ -396,6 +419,14 @@ const styles = StyleSheet.create({
   },
   markerPin: {
     position: "absolute",
+  },
+  waypointPin: {
+    position: "absolute",
+    alignItems: "center",
+  },
+  waypointLabel: {
+    fontSize: n(10),
+    marginTop: n(1),
   },
   scaleBar: {
     position: "absolute",
