@@ -22,29 +22,36 @@ function MarkerRow({
   editMode,
   onPress,
   onDelete,
+  onToggleVisibility,
 }: {
   marker: Marker;
   editMode: boolean;
   onPress: () => void;
   onDelete: () => void;
+  onToggleVisibility: () => void;
 }) {
   const { invertColors } = useInvertColors();
+  const iconColor = invertColors ? "black" : "white";
+  const visible = marker.visible !== false;
   return (
     <View style={styles.row}>
       <HapticPressable style={styles.rowContent} onPress={onPress}>
-        <StyledText style={styles.markerName}>{marker.name}</StyledText>
+        <StyledText style={[styles.markerName, !visible && styles.hidden]}>{marker.name}</StyledText>
         <StyledText style={styles.coords}>
           {marker.coords[1].toFixed(6)}, {marker.coords[0].toFixed(6)}
         </StyledText>
       </HapticPressable>
+      <HapticPressable onPress={onToggleVisibility} style={styles.iconBtn}>
+        <MaterialIcons
+          name={visible ? "visibility" : "visibility-off"}
+          size={n(20)}
+          color={iconColor}
+          style={visible ? null : styles.hidden}
+        />
+      </HapticPressable>
       {editMode && (
-        <HapticPressable onPress={onDelete} style={styles.deleteBtn}>
-          <MaterialIcons
-            name="close"
-            size={n(20)}
-            color={invertColors ? "black" : "white"}
-            style={{ opacity: 0.4 }}
-          />
+        <HapticPressable onPress={onDelete} style={styles.iconBtn}>
+          <MaterialIcons name="close" size={n(20)} color={iconColor} style={styles.dimmed} />
         </HapticPressable>
       )}
     </View>
@@ -52,7 +59,7 @@ function MarkerRow({
 }
 
 export default function MarkersScreen() {
-  const { markers, removeMarker } = useMarkers();
+  const { markers, removeMarker, toggleMarkerVisibility } = useMarkers();
   const { invertColors } = useInvertColors();
   const [editMode, setEditMode] = useState(false);
 
@@ -120,6 +127,7 @@ export default function MarkersScreen() {
             editMode={editMode}
             onPress={() => handleMarkerPress(marker)}
             onDelete={() => removeMarker(marker.id)}
+            onToggleVisibility={() => toggleMarkerVisibility(marker.id)}
           />
         ))}
       </View>
@@ -167,7 +175,13 @@ const styles = StyleSheet.create({
   coords: {
     fontSize: n(12),
   },
-  deleteBtn: {
+  iconBtn: {
     paddingTop: n(8),
+  },
+  hidden: {
+    opacity: 0.35,
+  },
+  dimmed: {
+    opacity: 0.4,
   },
 });

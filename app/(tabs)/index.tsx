@@ -107,7 +107,7 @@ export default function MapScreen() {
       const point = await mapRef.current.getPointInView(coords);
       setDotScreenPos({ x: point[0], y: point[1] });
     }
-    const currentMarkers = markersRef.current;
+    const currentMarkers = markersRef.current.filter((m) => m.visible !== false);
     if (currentMarkers.length > 0 && mapRef.current) {
       const entries = await Promise.all(
         currentMarkers.map(async (m) => {
