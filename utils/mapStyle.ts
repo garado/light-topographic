@@ -149,10 +149,12 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         layout: {
           ...vis("contours"),
           "symbol-placement": "line",
-          "text-field": ["to-string", ["get", "ele"]],
+          "text-field": units === "imperial"
+            ? ["concat", ["to-string", ["get", "ele"]], "ft"]
+            : ["concat", ["to-string", ["round", ["*", ["get", "ele"], 0.3048]]], "m"],
           "text-font": ["Noto Sans Regular"],
           "text-size": 9,
-          "symbol-spacing": 250,
+          "symbol-spacing": 150,
           "text-max-angle": 30,
         },
         paint: {
