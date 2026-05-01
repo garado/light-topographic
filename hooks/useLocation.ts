@@ -19,6 +19,7 @@ export function useLocation({
   moveCamera: (fn: () => void, duration: number) => void;
 }) {
   const [coords, setCoords] = useState<[number, number] | null>(null);
+  const [accuracy, setAccuracy] = useState<number | null>(null);
   const [lastFixTime, setLastFixTime] = useState<number | null>(null);
   const hasFlewToFirstFix = useRef(false);
   const [lastFixLabel, setLastFixLabel] = useState("∞");
@@ -39,6 +40,7 @@ export function useLocation({
         (pos) => {
           const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
           setCoords(c);
+          setAccuracy(pos.coords.accuracy ?? null);
           setLastFixTime(Date.now());
           coordsRef.current = c;
           if (!hasFlewToFirstFix.current) {
@@ -90,6 +92,7 @@ export function useLocation({
           setCoords(c);
           setLastFixTime(Date.now());
           coordsRef.current = c;
+          setAccuracy(pos.coords.accuracy ?? null);
           cameraRef.current?.flyTo(c, 400);
         },
         (err) => console.error("Location error:", err),
@@ -117,6 +120,7 @@ export function useLocation({
 
   return {
     coords,
+    accuracy,
     lastFixLabel,
     locateFollowing,
     locateModeRef,

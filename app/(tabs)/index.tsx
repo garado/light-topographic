@@ -64,7 +64,7 @@ export default function MapScreen() {
   }, []);
 
   const {
-    coords, lastFixLabel, locateFollowing,
+    coords, accuracy, lastFixLabel, locateFollowing,
     locateModeRef, lockBearingRef, setLocateMode, jumpToLocation,
   } = useLocation({ locationMode, cameraRef, coordsRef, bearingRef, moveCamera });
 
@@ -256,6 +256,29 @@ export default function MapScreen() {
           </MapLibreGL.ShapeSource>
         )}
       </MapLibreGL.MapView>
+
+      {dotScreenPos && accuracy !== null && (() => {
+        const lat = coords?.[1] ?? 0;
+        const metersPerPx = (156543.03392 * Math.cos(lat * Math.PI / 180)) / Math.pow(2, zoom);
+        const r = accuracy / metersPerPx;
+        const color = invertColors ? "0,0,0" : "255,255,255";
+        return (
+          <View
+            style={{
+              position: "absolute",
+              left: dotScreenPos.x - r,
+              top: dotScreenPos.y - r,
+              width: r * 2,
+              height: r * 2,
+              borderRadius: r,
+              backgroundColor: `rgba(${color},0.1)`,
+              borderWidth: 1,
+              borderColor: `rgba(${color},0.5)`,
+            }}
+            pointerEvents="none"
+          />
+        );
+      })()}
 
       {dotScreenPos && hasHeading && (
         <Animated.View
