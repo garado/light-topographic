@@ -1,5 +1,5 @@
 import type { MapLayers } from "@/contexts/MapLayersContext";
-import { FT_PER_M } from "./units";
+import { FT_PER_M, M_PER_FT } from "./units";
 import { darkMatter } from "./mapStyle/darkMatter";
 import { positron } from "./mapStyle/positron";
 import { coloredDark, coloredLight } from "./mapStyle/colored";
@@ -145,13 +145,20 @@ export function buildMapStyle(layers: MapLayers, invertColors = false, offlineOn
         type: "symbol",
         source: "contours",
         "source-layer": "contours",
-        filter: ["get", "idx"],
+
+        // <= zoom13: only multiples of 200 get labelled
+        // > zoom13: all contours are labeled
+        filter: ["any",
+          [">=", ["zoom"], 13],
+          ["==", ["%", ["get", "ele"], 200], 0],
+        ],
+
         layout: {
           ...vis("contours"),
           "symbol-placement": "line",
           "text-field": units === "imperial"
             ? ["concat", ["to-string", ["get", "ele"]], "ft"]
-            : ["concat", ["to-string", ["round", ["*", ["get", "ele"], 0.3048]]], "m"],
+            : ["concat", ["to-string", ["round", ["*", ["get", "ele"], M_PER_FT]]], "m"],
           "text-font": ["Noto Sans Regular"],
           "text-size": 9,
           "symbol-spacing": 150,
