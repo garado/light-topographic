@@ -57,4 +57,6 @@ adb shell pm grant com.garado.topographic android.permission.WRITE_SECURE_SETTIN
 
 ## Known issues
 
-- The Light Phone's magnetometer (compass) is quite sensitive to outside interference. Anything metal near the Light Phone can cause the directional indicator to lose accuracy. This includes a metal credit card in a DumbWireless case, which I found out after a very confusing debugging session.
+The Light Phone's magnetometer (compass) is quite sensitive to outside interefence. Anything metal near the Light Phone can cause the directional indicator to lose accuracy. This includes a metal credit card in a DumbWireless case, which I found out after a very confusing debugging session.
+
+If you encounter any problems, please open an issue!
